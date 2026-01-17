@@ -30,16 +30,12 @@
     }
     
     try {
-      console.log('Creating ticket with form data:', ticketForm);
       
       // Parse tags from comma-separated string
       const tags = ticketForm.tags
         .split(',')
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0);
-      
-      console.log('Parsed tags:', tags);
-      console.log('Category:', ticketForm.category || undefined);
       
       const ticketId = await addTicket(
         ticketForm.title,
@@ -49,7 +45,6 @@
         tags.length > 0 ? tags : undefined
       );
       
-      console.log('Ticket created successfully with ID:', ticketId);
       closeModal();
     } catch (error) {
       console.error('Error creating ticket:', error);
