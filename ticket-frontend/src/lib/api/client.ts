@@ -337,3 +337,19 @@ export async function createTicket(ticketData: {
 
   return response.json();
 }
+
+export async function deleteTicket(ticketId: string): Promise<{
+  success: boolean;
+  ticket_id: string;
+  message: string;
+}> {
+  const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete ticket: ${response.statusText}`);
+  }
+
+  return response.json();
+}

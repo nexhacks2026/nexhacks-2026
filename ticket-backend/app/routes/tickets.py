@@ -435,3 +435,24 @@ async def list_tickets(
         limit=limit,
         offset=offset,
     )
+
+
+@router.delete("/{ticket_id}")
+async def delete_ticket(ticket_id: str, background_tasks: BackgroundTasks):
+    """Delete a ticket by ID."""
+    ticket = ticket_repository.get(ticket_id)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    
+    # Remove from queue if present
+    position = queue_manager.get_queue_position(ticket_id)
+    if position:
+        queue_name, _ = position
+        queue_manager.remove_from_queue(ticket_id, queue_name)
+    
+    # Delete from repository
+    deleted = ticket_repository.delete(ticket_id)
+    if not deleted:
+        raise HTTPException(status_code=500, detail="Failed to delete ticket")
+    
+    return {"success": True, "ticket_id": ticket_id, "message": "Ticket deleted successfully"}

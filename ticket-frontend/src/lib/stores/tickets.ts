@@ -5,6 +5,7 @@ import {
   assignTicket,
   releaseTicket,
   createTicket as apiCreateTicket,
+  deleteTicket as apiDeleteTicket,
   type BackendTicket
 } from "../api/client"
 import { websocket, type TicketEvent } from "../api/websocket"
@@ -121,12 +122,12 @@ export async function addTicket(
       priority: priority.toUpperCase(),
       tags: tags || [],
     };
-    
+
     // Add category if provided
     if (category) {
       metadata.category = category.toUpperCase();
     }
-    
+
     const requestPayload = {
       source: 'FORM',
       content_type: 'form',
@@ -139,18 +140,18 @@ export async function addTicket(
       },
       metadata,
     };
-    
+
     console.log('Sending ticket creation request:', requestPayload);
-    
+
     const response = await apiCreateTicket(requestPayload);
-    
+
     console.log('Ticket creation response:', response);
-    
+
     // Refresh tickets after creation
     console.log('Reloading tickets...');
     await loadTickets();
     console.log('Tickets reloaded successfully');
-    
+
     return response.ticket_id;
   } catch (error) {
     console.error('Failed to create ticket:', error);
@@ -384,6 +385,20 @@ export async function releaseTicketFromAgent(ticketId: string, agentId: string):
     )
   } catch (e) {
     console.error('Failed to release ticket:', e)
+  }
+}
+
+export async function deleteTicket(ticketId: string): Promise<void> {
+  try {
+    await apiDeleteTicket(ticketId)
+
+    // Remove from local state
+    ticketsWritable.update((items: Ticket[]) =>
+      items.filter((t: Ticket) => t.id !== ticketId)
+    )
+  } catch (e) {
+    console.error('Failed to delete ticket:', e)
+    throw e
   }
 }
 
