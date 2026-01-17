@@ -48,3 +48,13 @@ services:
       - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
       - DISCORD_TOKEN=${DISCORD_TOKEN}
     restart: unless-stopped
+
+  ai-service:
+    build:
+      context: ./ai-backend
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    restart: unless-stopped
