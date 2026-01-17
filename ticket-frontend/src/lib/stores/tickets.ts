@@ -5,6 +5,7 @@ import {
   assignTicket,
   releaseTicket,
   createTicket as apiCreateTicket,
+  deleteTicket as apiDeleteTicket,
   type BackendTicket
 } from "../api/client"
 import { websocket, type TicketEvent } from "../api/websocket"
@@ -29,10 +30,10 @@ export interface AIReasoning {
 }
 
 // Backend status types matching the backend enums
-export type BackendTicketStatus = "INBOX" | "TRIAGE_PENDING" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED" | "CLOSED"
+export type BackendTicketStatus = "INBOX" | "TRIAGE_PENDING" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED"
 
 // Frontend status maps to backend status
-export type TicketStatus = "inbox" | "triage_pending" | "assigned" | "in_progress" | "resolved" | "closed"
+export type TicketStatus = "inbox" | "triage_pending" | "assigned" | "in_progress" | "resolved"
 export type TicketPriority = "low" | "medium" | "high" | "critical"
 
 export interface Ticket {
@@ -76,8 +77,6 @@ export function getStatusLabel(status: TicketStatus): string {
       return 'In Progress'
     case 'resolved':
       return 'Resolved'
-    case 'closed':
-      return 'Closed'
     default:
       return status
   }
@@ -96,8 +95,6 @@ export function getStatusColor(status: TicketStatus): string {
       return 'bg-purple-500/10 text-purple-500'
     case 'resolved':
       return 'bg-green-500/10 text-green-500'
-    case 'closed':
-      return 'bg-gray-500/10 text-gray-500'
     default:
       return 'bg-muted text-muted-foreground'
   }
@@ -276,10 +273,12 @@ export const currentAgent: Writable<string | null> = currentAgentWritable
 // Derived stores
 export const ticketsByStatus: Readable<Record<TicketStatus, Ticket[]>> = derived(ticketsWritable, ($tickets: Ticket[]) => {
   return {
-    open: $tickets.filter((t: Ticket) => t.status === 'open'),
+    inbox: $tickets.filter((t: Ticket) => t.status === 'inbox'),
+    triage_pending: $tickets.filter((t: Ticket) => t.status === 'triage_pending'),
+    assigned: $tickets.filter((t: Ticket) => t.status === 'assigned'),
     in_progress: $tickets.filter((t: Ticket) => t.status === 'in_progress'),
-    review: $tickets.filter((t: Ticket) => t.status === 'review'),
-    done: $tickets.filter((t: Ticket) => t.status === 'done'),
+    resolved: $tickets.filter((t: Ticket) => t.status === 'resolved'),
+    closed: $tickets.filter((t: Ticket) => t.status === 'closed'),
   }
 })
 
@@ -318,6 +317,8 @@ export async function updateTicketStatus(ticketId: string, newStatus: TicketStat
 
   if (!ticket) return
 
+  const oldStatus = ticket.status
+
   // Optimistically update local state
   ticketsWritable.update((items: Ticket[]) =>
     items.map((t: Ticket) =>
@@ -327,8 +328,20 @@ export async function updateTicketStatus(ticketId: string, newStatus: TicketStat
     )
   )
 
-  // Note: Full status changes require queue moves which need backend coordination
-  // For now, we just update locally - the backend sync will happen via WebSocket
+  try {
+    // Sync to backend - convert to uppercase for backend enum format
+    await apiUpdateTicket(ticketId, { status: newStatus.toUpperCase() })
+  } catch (e) {
+    console.error('Failed to update status:', e)
+    // Rollback on failure
+    ticketsWritable.update((items: Ticket[]) =>
+      items.map((t: Ticket) =>
+        t.id === ticketId
+          ? { ...t, status: oldStatus, updatedAt: new Date().toISOString() }
+          : t
+      )
+    )
+  }
 }
 
 export async function updateTicketPriority(ticketId: string, newPriority: TicketPriority): Promise<void> {
@@ -387,6 +400,20 @@ export async function releaseTicketFromAgent(ticketId: string, agentId: string):
     )
   } catch (e) {
     console.error('Failed to release ticket:', e)
+  }
+}
+
+export async function deleteTicket(ticketId: string): Promise<void> {
+  try {
+    await apiDeleteTicket(ticketId)
+
+    // Remove from local state
+    ticketsWritable.update((items: Ticket[]) =>
+      items.filter((t: Ticket) => t.id !== ticketId)
+    )
+  } catch (e) {
+    console.error('Failed to delete ticket:', e)
+    throw e
   }
 }
 

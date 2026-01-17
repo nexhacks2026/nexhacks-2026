@@ -105,6 +105,7 @@ export async function fetchTicket(ticketId: string): Promise<BackendTicket> {
 
 export async function updateTicket(ticketId: string, updates: {
   title?: string;
+  status?: string;
   priority?: string;
   category?: string;
   tags?: string[];
@@ -340,4 +341,20 @@ export async function createTicket(ticketData: {
 
   const result = await response.json();
   return result;
+}
+
+export async function deleteTicket(ticketId: string): Promise<{
+  success: boolean;
+  ticket_id: string;
+  message: string;
+}> {
+  const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete ticket: ${response.statusText}`);
+  }
+
+  return response.json();
 }

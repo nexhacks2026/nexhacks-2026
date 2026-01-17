@@ -20,8 +20,7 @@
     { id: 'triage_pending', label: 'Triage', color: 'bg-yellow-500' },
     { id: 'assigned', label: 'Assigned', color: 'bg-blue-500' },
     { id: 'in_progress', label: 'In Progress', color: 'bg-purple-500' },
-    { id: 'resolved', label: 'Resolved', color: 'bg-green-500' },
-    { id: 'closed', label: 'Closed', color: 'bg-gray-400' }
+    { id: 'resolved', label: 'Resolved', color: 'bg-green-500' }
   ];
   
   let draggedTicket: Ticket | null = $state(null);

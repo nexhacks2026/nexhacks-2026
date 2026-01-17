@@ -10,7 +10,6 @@ class TicketStatus(str, Enum):
     ASSIGNED = "ASSIGNED"
     IN_PROGRESS = "IN_PROGRESS"
     RESOLVED = "RESOLVED"
-    CLOSED = "CLOSED"
 
 
 class TicketPriority(str, Enum):
@@ -63,8 +62,7 @@ VALID_TRANSITIONS: dict[TicketStatus, list[TicketStatus]] = {
     TicketStatus.TRIAGE_PENDING: [TicketStatus.ASSIGNED, TicketStatus.RESOLVED],
     TicketStatus.ASSIGNED: [TicketStatus.IN_PROGRESS, TicketStatus.RESOLVED, TicketStatus.INBOX],
     TicketStatus.IN_PROGRESS: [TicketStatus.RESOLVED, TicketStatus.ASSIGNED, TicketStatus.INBOX],
-    TicketStatus.RESOLVED: [TicketStatus.CLOSED, TicketStatus.IN_PROGRESS],
-    TicketStatus.CLOSED: [],  # Terminal state
+    TicketStatus.RESOLVED: [TicketStatus.IN_PROGRESS],  # Can reopen if needed, otherwise terminal
 }
 
 

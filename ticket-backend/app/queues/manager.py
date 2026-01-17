@@ -108,7 +108,7 @@ class QueueManager:
         """
         Get next ticket ID from queue.
         If priority_based is True, returns highest priority ticket.
-        Otherwise, returns FIFO.
+        Otherwise, returns FILO.
         """
         with self._lock:
             if not self._queues[queue]:
@@ -121,7 +121,7 @@ class QueueManager:
                 entry = entries[0]
                 self._queues[queue].remove(entry)
             else:
-                entry = self._queues[queue].popleft()
+                entry = self._queues[queue].pop() # FILO is pop(), FIFO would be popleft()
 
             del self._ticket_queue_map[entry.ticket_id]
             return entry.ticket_id

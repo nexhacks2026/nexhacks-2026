@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
-  import { updateTicketStatus, updateTicketTitle, type Ticket, type TicketStatus, type TicketPriority } from '$lib/stores/tickets';
+  import { updateTicketStatus, updateTicketTitle, deleteTicket, type Ticket, type TicketStatus, type TicketPriority } from '$lib/stores/tickets';
   import AiReasoningPanel from './ai-reasoning-panel.svelte';
   
   interface Props {
@@ -23,10 +23,11 @@
   }
   
   const statuses: StatusOption[] = [
-    { id: 'open', label: 'Open' },
+    { id: 'inbox', label: 'Inbox' },
+    { id: 'triage_pending', label: 'Triage' },
+    { id: 'assigned', label: 'Assigned' },
     { id: 'in_progress', label: 'In Progress' },
-    { id: 'review', label: 'Review' },
-    { id: 'done', label: 'Done' }
+    { id: 'resolved', label: 'Resolved' }
   ];
   
   const priorityStyles: Record<TicketPriority, string> = {
@@ -75,6 +76,25 @@
   function handleCancelEdit(): void {
     editedTitle = ticket.title;
     isEditingTitle = false;
+  }
+  
+  let isDeleting = $state(false);
+  
+  async function handleDelete(): Promise<void> {
+    if (!confirm('Are you sure you want to delete this ticket? This action cannot be undone.')) {
+      return;
+    }
+    
+    isDeleting = true;
+    try {
+      await deleteTicket(ticket.id);
+      dismiss?.();
+    } catch (error) {
+      console.error('Failed to delete ticket:', error);
+      alert('Failed to delete ticket');
+    } finally {
+      isDeleting = false;
+    }
   }
 
 </script>
@@ -227,6 +247,25 @@
             </div>
           </div>
         {/if}
+        
+        <!-- Delete Button -->
+        <div class="py-4 border-t border-border/50">
+          <button
+            type="button"
+            onclick={handleDelete}
+            disabled={isDeleting}
+            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            {#if isDeleting}
+              Deleting...
+            {:else}
+              Delete Ticket
+            {/if}
+          </button>
+        </div>
       </div>
       
       <!-- Ai Reasoning Part -->
