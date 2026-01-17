@@ -105,6 +105,7 @@ class TriageCompleteRequest(BaseModel):
 
 class TicketUpdateRequest(BaseModel):
     """Request body for ticket updates."""
+    title: Optional[str] = None
     priority: Optional[TicketPriority] = None
     category: Optional[TicketCategory] = None
     tags: Optional[list[str]] = None
@@ -351,6 +352,10 @@ async def update_ticket(
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     changes = {}
+
+    if request.title is not None:
+        ticket.update_title(request.title)
+        changes["title"] = request.title
 
     if request.priority is not None:
         ticket.update_priority(request.priority)

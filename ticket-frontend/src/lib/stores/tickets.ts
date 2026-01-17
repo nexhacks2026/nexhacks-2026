@@ -134,14 +134,16 @@ function stringToColor(str: string): string {
 function transformBackendTicket(backendTicket: BackendTicket): Ticket {
   const content = backendTicket.content
 
-  // Extract title from content
-  let title = 'Untitled Ticket'
-  if (content.subject) {
-    title = content.subject
-  } else if (content.issue_title) {
-    title = content.issue_title
-  } else if (content.message_text) {
-    title = content.message_text.slice(0, 100)
+  // Use the title field from backend if available, otherwise extract from content
+  let title = backendTicket.title || 'Untitled Ticket'
+  if (!backendTicket.title) {
+    if (content.subject) {
+      title = content.subject
+    } else if (content.issue_title) {
+      title = content.issue_title
+    } else if (content.message_text) {
+      title = content.message_text.slice(0, 100)
+    }
   }
 
   // Extract description from content
@@ -256,6 +258,16 @@ export async function loadTickets(): Promise<void> {
     console.error('Failed to load tickets:', e)
   } finally {
     loadingWritable.set(false)
+  }
+}
+
+export async function updateTicketTitle(ticketId: string, newTitle: string): Promise<void> {
+  try {
+    await apiUpdateTicket(ticketId, { title: newTitle })
+    await loadTickets()
+  } catch (error) {
+    console.error('Failed to update ticket title:', error)
+    throw error
   }
 }
 
