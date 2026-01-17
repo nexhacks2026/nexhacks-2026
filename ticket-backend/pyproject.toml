@@ -1,9 +1,23 @@
 [project]
 name = "ticket-backend"
 version = "0.1.0"
-description = "Add your description here"
+description = "Ticket management system backend with queue processing and real-time updates"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "flask>=3.1.2",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "pydantic>=2.10.0",
+    "websockets>=14.0",
+    "python-dateutil>=2.9.0",
+]
+
+[project.scripts]
+ticket-backend = "main:app"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "httpx>=0.28.0",
+    "pytest-asyncio>=0.24.0",
 ]
