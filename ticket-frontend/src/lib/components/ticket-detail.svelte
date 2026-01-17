@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
-  import { updateTicketStatus, type Ticket, type TicketStatus, type TicketPriority } from '$lib/stores/tickets';
+  import { updateTicketStatus, updateTicketTitle, type Ticket, type TicketStatus, type TicketPriority } from '$lib/stores/tickets';
   import AiReasoningPanel from './ai-reasoning-panel.svelte';
   
   interface Props {
@@ -9,6 +9,13 @@
   }
   
   let { ticket, dismiss }: Props = $props();
+  
+  let isEditingTitle = $state(false);
+  let editedTitle = $state('');
+  
+  $effect(() => {
+    editedTitle = ticket.title;
+  });
   
   interface StatusOption {
     id: TicketStatus;
@@ -46,6 +53,30 @@
   function handleDismiss(): void {
     dismiss?.();
   }
+  
+  function handleEditTitle(): void {
+    isEditingTitle = true;
+  }
+  
+  async function handleSaveTitle(): Promise<void> {
+    if (editedTitle.trim() && editedTitle !== ticket.title) {
+      try {
+        await updateTicketTitle(ticket.id, editedTitle.trim());
+        // Don't mutate ticket directly - the store will reload tickets
+      } catch (error) {
+        console.error('Failed to save title:', error);
+        alert('Failed to update ticket title');
+        editedTitle = ticket.title;
+      }
+    }
+    isEditingTitle = false;
+  }
+  
+  function handleCancelEdit(): void {
+    editedTitle = ticket.title;
+    isEditingTitle = false;
+  }
+
 </script>
 
 <aside 
@@ -74,11 +105,56 @@
   <div class="flex-1 overflow-y-auto">
     <div class="p-6 space-y-6">
       <div>
-        <h2 class="text-lg font-semibold text-foreground mb-2">{ticket.title}</h2>
+        {#if isEditingTitle}
+          <div class="flex items-center gap-2 mb-2">
+            <input
+              type="text"
+              bind:value={editedTitle}
+              class="flex-1 text-lg font-semibold bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
+              autofocus
+            />
+            <button
+              type="button"
+              onclick={handleSaveTitle}
+              class="p-1.5 rounded hover:bg-muted text-primary"
+              aria-label="Save"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onclick={handleCancelEdit}
+              class="p-1.5 rounded hover:bg-muted text-muted-foreground"
+              aria-label="Cancel"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        {:else}
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <h2 class="text-lg font-semibold text-foreground">{ticket.title}</h2>
+            <button
+              type="button"
+              onclick={handleEditTitle}
+              class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Edit title"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+          </div>
+        {/if}
         <p class="text-sm text-muted-foreground leading-relaxed">{ticket.description}</p>
       </div>
       
       <div class="space-y-4">
+       
+        <!-- Status Section -->
         <div class="flex items-center justify-between py-3 border-b border-border/50">
           <span class="text-sm text-muted-foreground">Status</span>
           <div class="flex gap-1">
@@ -95,6 +171,7 @@
           </div>
         </div>
         
+        <!-- Assignee Section -->
         <div class="flex items-center justify-between py-3 border-b border-border/50">
           <span class="text-sm text-muted-foreground">Assignee</span>
           {#if ticket.assignee}
@@ -112,11 +189,13 @@
           {/if}
         </div>
         
+        <!-- Created Section -->
         <div class="flex items-center justify-between py-3 border-b border-border/50">
           <span class="text-sm text-muted-foreground">Created</span>
           <span class="text-sm text-foreground">{formatDate(ticket.createdAt)}</span>
         </div>
         
+        <!-- Updated Section -->
         <div class="flex items-center justify-between py-3 border-b border-border/50">
           <span class="text-sm text-muted-foreground">Updated</span>
           <span class="text-sm text-foreground">{formatDate(ticket.updatedAt)}</span>
@@ -136,6 +215,7 @@
         {/if}
       </div>
       
+      <!-- Ai Reasoning Part -->
       {#if ticket.aiReasoning}
         <AiReasoningPanel reasoning={ticket.aiReasoning} />
       {/if}

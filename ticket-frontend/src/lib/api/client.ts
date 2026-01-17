@@ -14,6 +14,7 @@ export interface BackendTicket {
   category: 'BILLING' | 'TECHNICAL_SUPPORT' | 'FEATURE_REQUEST' | 'BUG_REPORT' | 'ADMIN' | 'OTHER' | null;
   status: 'INBOX' | 'TRIAGE_PENDING' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
   current_queue: 'INBOX' | 'TRIAGE' | 'ASSIGNMENT' | 'ACTIVE' | 'RESOLUTION';
+  title?: string;
   content: {
     type: string;
     sender_email?: string;
@@ -103,6 +104,7 @@ export async function fetchTicket(ticketId: string): Promise<BackendTicket> {
 }
 
 export async function updateTicket(ticketId: string, updates: {
+  title?: string;
   priority?: string;
   category?: string;
   tags?: string[];
