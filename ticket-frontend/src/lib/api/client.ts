@@ -326,6 +326,7 @@ export async function createTicket(ticketData: {
   estimated_time_to_triage: string;
   created_at: string;
 }> {
+  
   const response = await fetch(`${API_BASE_URL}/api/tickets/ingest`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -333,10 +334,13 @@ export async function createTicket(ticketData: {
   });
 
   if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Create ticket failed:', response.status, errorText);
     throw new Error(`Failed to create ticket: ${response.statusText}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  return result;
 }
 
 export async function deleteTicket(ticketId: string): Promise<{
