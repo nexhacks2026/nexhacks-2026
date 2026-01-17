@@ -28,6 +28,16 @@
     
     // Load tickets from backend
     loadTickets();
+    
+    // Listen for search ticket selection
+    const handleSearchSelection = (e: CustomEvent) => {
+      handleSelectTicket({ id: e.detail.ticketId });
+    };
+    window.addEventListener('select-ticket', handleSearchSelection as EventListener);
+    
+    return () => {
+      window.removeEventListener('select-ticket', handleSearchSelection as EventListener);
+    };
   });
 
   onDestroy(() => {
@@ -36,8 +46,13 @@
   });
 
   function handleSelectTicket(event: { id: string }) {
-    selectedTicketId = event.id;
-    selectedTicket = $tickets.find(t => t.id === selectedTicketId) || null;
+    // Toggle: if clicking the same ticket, close the detail panel
+    if (selectedTicketId === event.id) {
+      handleCloseDetail();
+    } else {
+      selectedTicketId = event.id;
+      selectedTicket = $tickets.find(t => t.id === selectedTicketId) || null;
+    }
   }
 
   function handleCloseDetail() {

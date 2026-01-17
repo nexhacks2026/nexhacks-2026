@@ -1,0 +1,538 @@
+{
+  "name": "Nex-pull-data",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "guildId": {
+          "__rl": true,
+          "value": "1462147092691681383",
+          "mode": "list",
+          "cachedResultName": "BestTeam-NexHacks",
+          "cachedResultUrl": "https://discord.com/channels/1462147092691681383"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1462147280391110686",
+          "mode": "list",
+          "cachedResultName": "add-tasks",
+          "cachedResultUrl": "https://discord.com/channels/1462147092691681383/1462147280391110686"
+        },
+        "limit": 1,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "9ebc4388-f08b-44ae-8f67-4e0ba84c2c4f",
+      "name": "Get many messages",
+      "webhookId": "c9dbfb02-ddf4-449a-b104-59dc1a687407",
+      "credentials": {
+        "discordBotApi": {
+          "id": "CNBBnTnChO9YXcN4",
+          "name": "Discord Bot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fa77ee1d-d464-44f0-8f50-9dfe8f5fa2df",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ef0b97b9-236b-4a39-8532-92ce9155ead7",
+      "name": "Webhook",
+      "webhookId": "fa77ee1d-d464-44f0-8f50-9dfe8f5fa2df"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1462147092691681383",
+          "mode": "list",
+          "cachedResultName": "BestTeam-NexHacks",
+          "cachedResultUrl": "https://discord.com/channels/1462147092691681383"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1462147280391110686",
+          "mode": "list",
+          "cachedResultName": "add-tasks",
+          "cachedResultUrl": "https://discord.com/channels/1462147092691681383/1462147280391110686"
+        },
+        "content": "=Thank you {{ $json.author.username }} for your task! I am adding it to our system :)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        416,
+        -80
+      ],
+      "id": "09223413-a23d-405f-8258-69c2e3940076",
+      "name": "Send a message",
+      "webhookId": "6dd1cf73-9faf-4a94-927f-41eff2d8f42c",
+      "credentials": {
+        "discordBotApi": {
+          "id": "CNBBnTnChO9YXcN4",
+          "name": "Discord Bot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "owner": {
+          "__rl": true,
+          "value": "nexhacks2026",
+          "mode": "list",
+          "cachedResultName": "nexhacks2026",
+          "cachedResultUrl": "https://github.com/nexhacks2026"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "nexhacks-2026",
+          "mode": "list"
+        },
+        "events": [
+          "issues"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.githubTrigger",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        336
+      ],
+      "id": "3b813ef1-b198-44fc-8d25-e1973bddd566",
+      "name": "Github Trigger",
+      "webhookId": "2d805124-7c08-4b88-bd1f-e071f886fae6",
+      "credentials": {
+        "githubOAuth2Api": {
+          "id": "gR7o7x6A83xVFZ6J",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"source\": \"GITHUB\",\n  \"content_type\": \"github\",\n  \"payload\": {\n    \"id\": \"{{ $json.body.issue.number }}\",\n    \"issue_url\": \"{{ $json.body.issue.url }}\",\n    \"repo_url\": \"{{ $json.body.issue.repository_url }}\",\n    \"user\": null,\n    \"subject\": \"{{ $json.body.issue.title }}\",\n    \"body\": \"{{ $json.body.issue.body }}\",\n    \"timestamp\": \"{{ $json.body.issue.created_at }}\",\n  },\n  \"metadata\": {\n    \"priority\": \"HIGH\",\n    \"tags\": [\"coding\", \"urgent\"]\n  }\n}\n ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        432
+      ],
+      "id": "16192fcc-fb94-428d-8428-4a3e5fe0357c",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "createComment",
+        "owner": {
+          "__rl": true,
+          "value": "nexhacks2026",
+          "mode": "list",
+          "cachedResultName": "nexhacks2026",
+          "cachedResultUrl": "https://github.com/nexhacks2026"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "nexhacks-2026",
+          "mode": "list",
+          "cachedResultName": "nexhacks-2026",
+          "cachedResultUrl": "https://github.com/nexhacks2026/nexhacks-2026"
+        },
+        "issueNumber": "={{ $json.body.issue.number }}",
+        "body": "Received from the n8n agent. Your task is being created..."
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        272,
+        256
+      ],
+      "id": "c4068966-14e0-4be5-9ae9-15aebd074978",
+      "name": "Create a comment on an issue",
+      "webhookId": "3d1cf430-e450-48cf-ae3e-c196da393d95",
+      "credentials": {
+        "githubOAuth2Api": {
+          "id": "gR7o7x6A83xVFZ6J",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "createComment",
+        "owner": {
+          "__rl": true,
+          "value": "nexhacks2026",
+          "mode": "list",
+          "cachedResultName": "nexhacks2026",
+          "cachedResultUrl": "https://github.com/nexhacks2026"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "nexhacks-2026",
+          "mode": "list",
+          "cachedResultName": "nexhacks-2026",
+          "cachedResultUrl": "https://github.com/nexhacks2026/nexhacks-2026"
+        },
+        "issueNumber": "={{ $json.payload.id }}",
+        "body": "Task created!"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        432,
+        512
+      ],
+      "id": "41e3575f-5a74-406e-9109-9c41cdf5029a",
+      "name": "Create a comment on an issue1",
+      "webhookId": "3d1cf430-e450-48cf-ae3e-c196da393d95",
+      "credentials": {
+        "githubOAuth2Api": {
+          "id": "gR7o7x6A83xVFZ6J",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://narr0w.tech/api/tickets/ingest",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"source\": {{ $json.source.toJsonString() }},\n  \"content_type\": {{ $json.content_type.toJsonString() }},\n  \"payload\": {\n    \"id\": \"{{ $json.payload.id }}\",\n    \"issue_url\": {{ $json.payload.issue_url?.toJsonString() }},\n    \"repo_url\": {{ $json.payload.repo_url?.toJsonString() }},\n    \"subject\": {{ $json.payload.subject?.toJsonString() }},\n    \"user\": \"{{ $json.payload.user }}\",\n    \"body\": {{ $json.payload.body.toJsonString() }},\n    \"timestamp\": {{ $json.payload.timestamp.toJsonString() }}\n  },\n  \"metadata\": {\n    \"priority\": {{ $json.metadata.priority.toJsonString() }},\n    \"tags\": {{ $json.metadata.tags.toJsonString() }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1312,
+        336
+      ],
+      "id": "c0c51f70-c227-4a37-ae6c-ff66b0cc3a0d",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"source\": \"DISCORD\",\n  \"content_type\": \"discord\",\n  \"payload\": {\n    \"id\": \"null\",\n    \"issue_url\": \"null\",\n    \"repo_url\": \"null\",\n    \"user\": \"{{ $json.author.username }}\",\n    \"subject\": \"null\",\n    \"body\": \"{{ $json.content }}\",\n    \"timestamp\": \"{{ $json.timestamp }}\",\n  },\n  \"metadata\": {\n    \"priority\": \"MEDIUM\",\n    \"tags\": [\"general\"]\n  }\n}\n ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        96
+      ],
+      "id": "e0269d00-6a89-48a9-98dd-80a8aa44ad8c",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = ($input.first().json.payload.subject + \" \" + $input.first().json.payload.body).toLowerCase();\n\nconst existingTags = $input.first().json.metadata.tags || [];\n// Merge + dedupe\nconst tags = [...new Set([...existingTags])];\n\n// ---- Helper ----\nconst add = (tag) => { if (!tags.includes(tag)) tags.push(tag); };\n\nif (text.match(/```|`[^`]+`/)) add(\"contains-code\");\n\n// Stack traces & errors\nif (text.match(/exception|stack trace|traceback|segmentation fault|core dumped/))\n  add(\"stack-trace\");\n\n// Common error language\nif (text.match(/\\berror\\b|\\bfail(ed|ure)?\\b|\\bcrash(ed)?\\b|\\bpanic\\b/))\n  add(\"error\");\n\n// Programming languages\nif (text.match(/\\b(js|javascript|node|node\\.js)\\b/)) add(\"lang-javascript\");\nif (text.match(/\\b(python|py|pip|venv)\\b/)){ \n  add(\"lang-python\");\n  add(\"coding\")\n}\nif (text.match(/\\b(java|jvm|spring)\\b/)){ \n  add(\"lang-java\");\n  add(\"coding\")\n}\nif (text.match(/\\b(c\\+\\+|cpp|c#|\\.net)\\b/)){ \n  add(\"lang-c-family\");\n  add(\"coding\")\n}\nif (text.match(/\\b(golang)\\b/)){ \n  add(\"lang-go\");\n  add(\"coding\")\n}\nif (text.match(/\\b(rust|cargo)\\b/)){ \n  add(\"lang-rust\");\n  add(\"coding\")\n}\n\n// Dev tooling\nif (text.match(/\\b(git|github|gitlab|commit|pr|pull request|merge)\\b/))\n  add(\"tool-git\");\n\nif (text.match(/\\b(docker|container|kubernetes|k8s)\\b/))\n  add(\"tool-containers\");\n\nif (text.match(/\\b(ci|cd|pipeline|github actions|jenkins)\\b/))\n  add(\"tool-ci\");\n\n// APIs & infra\nif (text.match(/\\b(api|endpoint|rest|graphql|webhook)\\b/))\n  add(\"api-related\");\n\nif (text.match(/\\b(server|backend|frontend|database|db|sql|postgres|mysql|redis)\\b/))\n  add(\"infra\");\n\n// ================================\n// 🧍 USER-INTENT TAGS (VISIBLE)\n// ================================\n\n// Core intent\nif (text.match(/\\b(bug|issue|broken|doesn'?t work)\\b/))\n  add(\"bug\");\n\nif (text.match(/\\b(feature|request|enhancement|would be nice|add support)\\b/))\n  add(\"feature-request\");\n\nif (text.match(/\\b(how do i|how to|help|question)\\b/))\n  add(\"question\");\n\nif (text.match(/\\b(docs|documentation|readme|guide)\\b/))\n  add(\"docs\");\n\n// Urgency & severity\nif (text.match(/\\b(urgent|asap|immediately|right now)\\b/))\n  add(\"priority-high\");\n\nif (text.match(/\\b(blocked|blocking|cannot proceed|stuck)\\b/))\n  add(\"blocked\");\n\nif (text.match(/\\b(down|outage|incident|production)\\b/))\n  add(\"incident\");\n\n// Existing tags (fallback to empty array)\n\n\nreturn [{\n  json: {\n    ...$input.first().json,\n    metadata: {\n      ...$input.first().json.metadata,\n      tags: tags\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        336
+      ],
+      "id": "16906d15-b831-4c21-9119-617d3872672a",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        144,
+        816
+      ],
+      "id": "27439292-95b7-48e1-81e6-e70b485466c7",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "g4t1GudG7shruDPz",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"source\": \"EMAIL\",\n  \"content_type\": \"email\",\n  \"payload\": {\n    \"id\": \"{{ $json.id }}\",\n    \"issue_url\": \"null\",\n    \"repo_url\": \"null\",\n    \"user\": \"null\",\n    \"subject\": \"{{ $json.Subject }}\",\n    \"body\": \"{{ $json.snippet }}\",\n    \"timestamp\": {{ $now }},\n  },\n  \"metadata\": {\n    \"priority\": \"MEDIUM\",\n    \"tags\": [\"email\"]\n  }\n}\n ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        352,
+        752
+      ],
+      "id": "cdea1be0-718c-42fb-a14a-fc480abe538c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "reply",
+        "threadId": "={{ $json.threadId }}",
+        "messageId": "={{ $json.id }}",
+        "message": "Received your ticket. Added to our system! Thank you.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        352,
+        912
+      ],
+      "id": "12d10fcd-b8b7-4642-a88b-6b4f1db3b788",
+      "name": "Reply to a message",
+      "webhookId": "25f1a4da-cbd8-4089-a384-10becf736acf",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "g4t1GudG7shruDPz",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        880,
+        320
+      ],
+      "id": "384208b6-b294-48fe-912e-4c692e52e4db",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "611d62ce-d4eb-4207-9143-90f2c6fa5a60",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "opened",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        336
+      ],
+      "id": "f03fa9e1-0cf1-49e3-89f8-b3876e0402a0",
+      "name": "If Opened Task"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get many messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Github Trigger": {
+      "main": [
+        [
+          {
+            "node": "If Opened Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Create a comment on an issue1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Create a comment on an issue": {
+      "main": [
+        []
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        []
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reply to a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Opened Task": {
+      "main": [
+        [
+          {
+            "node": "Create a comment on an issue",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1
+  },
+  "versionId": "9463ece0-817b-4e0e-b67f-bac9c651548a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "14de6ac49c93d3031942c5b3c98f9ea2b0f04b1959d9689ed31784f1b4198b24"
+  },
+  "id": "U2qyGpJmm0RJnRcYWheQO",
+  "tags": []
+}

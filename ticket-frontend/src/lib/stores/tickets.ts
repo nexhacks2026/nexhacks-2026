@@ -287,7 +287,6 @@ export const ticketsByStatus: Readable<Record<TicketStatus, Ticket[]>> = derived
     assigned: $tickets.filter((t: Ticket) => t.status === 'assigned'),
     in_progress: $tickets.filter((t: Ticket) => t.status === 'in_progress'),
     resolved: $tickets.filter((t: Ticket) => t.status === 'resolved'),
-    closed: $tickets.filter((t: Ticket) => t.status === 'closed'),
   }
 })
 
