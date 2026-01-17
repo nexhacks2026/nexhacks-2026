@@ -105,6 +105,7 @@ export async function fetchTicket(ticketId: string): Promise<BackendTicket> {
 
 export async function updateTicket(ticketId: string, updates: {
   title?: string;
+  status?: string;
   priority?: string;
   category?: string;
   tags?: string[];
