@@ -10,8 +10,7 @@ const client = new Client({
   ],
 });
 
-const webhookTestUrl = process.env.N8N_WEBHOOK_TEST_URL;
-const webhookProdUrl = process.env.N8N_WEBHOOK_PROD_URL;
+const webhookUrl = process.env.N8N_WEBHOOK_URL;
 
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
@@ -22,7 +21,7 @@ client.on("messageCreate", async (message) => {
   if (message.channel.name !== "add-tasks") return;
   console.log(`Message from ${message.author.username}: ${message.content}`);
   try {
-    await fetch(webhookTestUrl, {
+    await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
