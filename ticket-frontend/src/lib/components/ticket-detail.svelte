@@ -79,6 +79,8 @@
       </div>
       
       <div class="space-y-4">
+
+        <!-- Status Section -->
         <div class="flex items-center justify-between py-3 border-b border-border/50">
           <span class="text-sm text-muted-foreground">Status</span>
           <div class="flex gap-1">
@@ -95,6 +97,7 @@
           </div>
         </div>
         
+        <!-- Assignee Section -->
         <div class="flex items-center justify-between py-3 border-b border-border/50">
           <span class="text-sm text-muted-foreground">Assignee</span>
           {#if ticket.assignee}
@@ -112,11 +115,13 @@
           {/if}
         </div>
         
+        <!-- Created Section -->
         <div class="flex items-center justify-between py-3 border-b border-border/50">
           <span class="text-sm text-muted-foreground">Created</span>
           <span class="text-sm text-foreground">{formatDate(ticket.createdAt)}</span>
         </div>
         
+        <!-- Updated Section -->
         <div class="flex items-center justify-between py-3 border-b border-border/50">
           <span class="text-sm text-muted-foreground">Updated</span>
           <span class="text-sm text-foreground">{formatDate(ticket.updatedAt)}</span>
@@ -136,6 +141,7 @@
         {/if}
       </div>
       
+      <!-- Ai Reasoning Part -->
       {#if ticket.aiReasoning}
         <AiReasoningPanel reasoning={ticket.aiReasoning} />
       {/if}
