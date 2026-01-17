@@ -16,10 +16,12 @@
   }
   
   const columns: Column[] = [
-    { id: 'open', label: 'Open', color: 'bg-primary' },
-    { id: 'in_progress', label: 'In Progress', color: 'bg-warning' },
-    { id: 'review', label: 'Review', color: 'bg-accent' },
-    { id: 'done', label: 'Done', color: 'bg-success' }
+    { id: 'inbox', label: 'Inbox', color: 'bg-gray-500' },
+    { id: 'triage_pending', label: 'Triage', color: 'bg-yellow-500' },
+    { id: 'assigned', label: 'Assigned', color: 'bg-blue-500' },
+    { id: 'in_progress', label: 'In Progress', color: 'bg-purple-500' },
+    { id: 'resolved', label: 'Resolved', color: 'bg-green-500' },
+    { id: 'closed', label: 'Closed', color: 'bg-gray-400' }
   ];
   
   let draggedTicket: Ticket | null = $state(null);

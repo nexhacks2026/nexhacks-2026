@@ -220,24 +220,25 @@ async def ingest_ticket(
     # Save ticket
     ticket_repository.save(ticket)
 
-    # Move to TRIAGE queue
-    ticket.move_to_queue(QueueType.TRIAGE)
-    ticket_repository.save(ticket)
+    # Keep in INBOX queue (don't move to TRIAGE automatically)
+    # ticket.move_to_queue(QueueType.TRIAGE)
+    # ticket_repository.save(ticket)
 
-    # Enqueue
+    # Enqueue in INBOX
     position = queue_manager.enqueue(
         ticket=ticket,
-        queue=QueueType.TRIAGE,
+        queue=QueueType.INBOX,
         reason="ingested from webhook",
     )
 
     # Estimate wait time
-    wait_seconds = queue_manager.estimate_wait_time(QueueType.TRIAGE, position)
+    wait_seconds = queue_manager.estimate_wait_time(QueueType.INBOX, position)
     wait_minutes = max(1, int(wait_seconds / 60))
 
     # Publish events in background
     background_tasks.add_task(event_publisher.publish_ticket_created, ticket)
-    background_tasks.add_task(event_publisher.publish_ticket_triage_pending, ticket)
+    # Don't publish triage_pending since we're keeping it in inbox
+    # background_tasks.add_task(event_publisher.publish_ticket_triage_pending, ticket)
 
     return IngestResponse(
         ticket_id=ticket.id,

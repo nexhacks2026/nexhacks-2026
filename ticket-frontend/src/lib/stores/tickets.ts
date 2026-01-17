@@ -28,8 +28,11 @@ export interface AIReasoning {
   steps: ReasoningStep[]
 }
 
-// Frontend status maps to backend queue-based workflow
-export type TicketStatus = "open" | "in_progress" | "review" | "done"
+// Backend status types matching the backend enums
+export type BackendTicketStatus = "INBOX" | "TRIAGE_PENDING" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED" | "CLOSED"
+
+// Frontend status maps to backend status
+export type TicketStatus = "inbox" | "triage_pending" | "assigned" | "in_progress" | "resolved" | "closed"
 export type TicketPriority = "low" | "medium" | "high" | "critical"
 
 export interface Ticket {
@@ -50,39 +53,53 @@ export interface Ticket {
   suggestedAssignee?: string
 }
 
-// Map backend queue/status to frontend status
+// Map backend status to frontend status (lowercase)
 function mapBackendStatusToFrontend(backendTicket: BackendTicket): TicketStatus {
-  const queue = backendTicket.current_queue
-  const status = backendTicket.status
+  return backendTicket.status.toLowerCase() as TicketStatus
+}
 
-  // Map based on queue primarily
-  switch (queue) {
-    case 'INBOX':
-    case 'TRIAGE':
-    case 'ASSIGNMENT':
-      return 'open'
-    case 'ACTIVE':
-      return 'in_progress'
-    case 'RESOLUTION':
-      return status === 'CLOSED' ? 'done' : 'review'
+// Map frontend status to backend status (uppercase)
+export function mapFrontendStatusToBackend(status: TicketStatus): BackendTicketStatus {
+  return status.toUpperCase() as BackendTicketStatus
+}
+
+// Get display label for status
+export function getStatusLabel(status: TicketStatus): string {
+  switch (status) {
+    case 'inbox':
+      return 'Inbox'
+    case 'triage_pending':
+      return 'Triage Pending'
+    case 'assigned':
+      return 'Assigned'
+    case 'in_progress':
+      return 'In Progress'
+    case 'resolved':
+      return 'Resolved'
+    case 'closed':
+      return 'Closed'
     default:
-      return 'open'
+      return status
   }
 }
 
-// Map frontend status to backend queue
-export function mapFrontendStatusToBackend(status: TicketStatus): { queue: string; backendStatus: string } {
+// Get color class for status
+export function getStatusColor(status: TicketStatus): string {
   switch (status) {
-    case 'open':
-      return { queue: 'ASSIGNMENT', backendStatus: 'ASSIGNED' }
+    case 'inbox':
+      return 'bg-muted text-muted-foreground'
+    case 'triage_pending':
+      return 'bg-yellow-500/10 text-yellow-500'
+    case 'assigned':
+      return 'bg-blue-500/10 text-blue-500'
     case 'in_progress':
-      return { queue: 'ACTIVE', backendStatus: 'IN_PROGRESS' }
-    case 'review':
-      return { queue: 'RESOLUTION', backendStatus: 'RESOLVED' }
-    case 'done':
-      return { queue: 'RESOLUTION', backendStatus: 'CLOSED' }
+      return 'bg-purple-500/10 text-purple-500'
+    case 'resolved':
+      return 'bg-green-500/10 text-green-500'
+    case 'closed':
+      return 'bg-gray-500/10 text-gray-500'
     default:
-      return { queue: 'ASSIGNMENT', backendStatus: 'ASSIGNED' }
+      return 'bg-muted text-muted-foreground'
   }
 }
 
@@ -92,9 +109,25 @@ function mapBackendPriority(priority: string): TicketPriority {
 }
 
 // Create new ticket
-export async function addTicket(title: string, description: string, priority: TicketPriority = 'medium'): Promise<string> {
+export async function addTicket(
+  title: string,
+  description: string,
+  priority: TicketPriority = 'medium',
+  category?: string,
+  tags?: string[]
+): Promise<string> {
   try {
-    const response = await apiCreateTicket({
+    const metadata: any = {
+      priority: priority.toUpperCase(),
+      tags: tags || [],
+    };
+    
+    // Add category if provided
+    if (category) {
+      metadata.category = category.toUpperCase();
+    }
+    
+    const requestPayload = {
       source: 'FORM',
       content_type: 'form',
       payload: {
@@ -104,14 +137,19 @@ export async function addTicket(title: string, description: string, priority: Ti
         },
         submission_time: new Date().toISOString(),
       },
-      metadata: {
-        priority: priority.toUpperCase(),
-        tags: [],
-      },
-    });
+      metadata,
+    };
+    
+    console.log('Sending ticket creation request:', requestPayload);
+    
+    const response = await apiCreateTicket(requestPayload);
+    
+    console.log('Ticket creation response:', response);
     
     // Refresh tickets after creation
+    console.log('Reloading tickets...');
     await loadTickets();
+    console.log('Tickets reloaded successfully');
     
     return response.ticket_id;
   } catch (error) {
@@ -374,21 +412,11 @@ function handleWebSocketEvent(event: TicketEvent): void {
 
   switch (event.event) {
     case 'ticket.created':
-      // Reload tickets to get the new one
-      loadTickets()
-      break
-
+    case 'ticket.triage_pending':
     case 'ticket.updated':
-      if (event.data.ticket_id) {
-        // Reload the specific ticket or all tickets
-        loadTickets()
-      }
-      break
-
     case 'ticket.moved':
-      if (event.data.ticket_id) {
-        loadTickets()
-      }
+      // Reload tickets to reflect changes
+      loadTickets()
       break
 
     case 'ticket.assigned':

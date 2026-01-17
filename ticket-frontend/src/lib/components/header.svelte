@@ -37,17 +37,38 @@
     }
     
     try {
-      await addTicket(ticketForm.title, ticketForm.description, ticketForm.priority);
+      console.log('Creating ticket with form data:', ticketForm);
+      
+      // Parse tags from comma-separated string
+      const tags = ticketForm.tags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
+      
+      console.log('Parsed tags:', tags);
+      console.log('Category:', ticketForm.category || undefined);
+      
+      const ticketId = await addTicket(
+        ticketForm.title,
+        ticketForm.description,
+        ticketForm.priority,
+        ticketForm.category || undefined,
+        tags.length > 0 ? tags : undefined
+      );
+      
+      console.log('Ticket created successfully with ID:', ticketId);
       closeTicketModal();
       alert('Ticket created successfully!');
     } catch (error) {
-      alert('Failed to create ticket: ' + error);
+      console.error('Error creating ticket:', error);
+      alert('Failed to create ticket: ' + (error instanceof Error ? error.message : String(error)));
     }
   }
   
-  let stats: { total: number; open: number; inProgress: number; critical: number } = {
+  let stats: { total: number; inbox: number; assigned: number; inProgress: number; critical: number } = {
     total: ticketList.length,
-    open: ticketList.filter(t => t.status === 'open').length,
+    inbox: ticketList.filter(t => t.status === 'inbox' || t.status === 'triage_pending').length,
+    assigned: ticketList.filter(t => t.status === 'assigned').length,
     inProgress: ticketList.filter(t => t.status === 'in_progress').length,
     critical: ticketList.filter(t => t.priority === 'critical').length
   };
@@ -85,11 +106,11 @@
     <div class="flex items-center gap-4 text-sm">
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-foreground"></span>
-        <span class="text-muted-foreground">{stats.open} Open</span>
+        <span class="text-muted-foreground">{stats.inbox} Inbox</span>
       </div>
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-primary"></span>
-        <span class="text-muted-foreground">{stats.inProgress} Assigned</span>
+        <span class="text-muted-foreground">{stats.assigned} Assigned</span>
       </div>
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-warning"></span>
