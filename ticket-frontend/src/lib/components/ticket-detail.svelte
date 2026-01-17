@@ -171,6 +171,16 @@
           </div>
         </div>
         
+        <!-- Description Section -->
+        <div class="flex flex-col py-3 border-b border-border/50">
+          <span class="text-sm text-muted-foreground mb-2">Description</span>
+          {#if ticket.description}
+            <p class="text-sm text-foreground leading-relaxed">{ticket.description}</p>
+            {:else}
+            <p class="text-sm text-foreground leading-relaxed">Empty</p>
+          {/if}
+        </div>
+
         <!-- Assignee Section -->
         <div class="flex items-center justify-between py-3 border-b border-border/50">
           <span class="text-sm text-muted-foreground">Assignee</span>
