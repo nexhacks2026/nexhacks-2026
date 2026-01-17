@@ -121,6 +121,9 @@ export async function addTicket(
       priority: priority.toUpperCase(),
       tags: tags || [],
     };
+
+    console.log("title::", title)
+    console.log("description::", description)
     
     // Add category if provided
     if (category) {

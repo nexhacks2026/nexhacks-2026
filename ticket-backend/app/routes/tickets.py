@@ -217,6 +217,33 @@ async def ingest_ticket(
         tags=tags,
     )
 
+    # Allow optional title coming from metadata or payload (useful for form submissions)
+    # Priority: metadata.title -> payload.fields.subject -> payload.fields.title -> payload.fields.message
+    title_candidate = None
+    if request.metadata and isinstance(request.metadata, dict):
+        if "title" in request.metadata:
+            title_candidate = request.metadata.get("title")
+
+    if not title_candidate:
+        payload_fields = request.payload.get("fields") if isinstance(request.payload, dict) else None
+        if not payload_fields:
+            payload_fields = request.payload.get("form_fields") if isinstance(request.payload, dict) else None
+
+        if isinstance(payload_fields, dict):
+            if "subject" in payload_fields:
+                title_candidate = payload_fields.get("subject")
+            elif "title" in payload_fields:
+                title_candidate = payload_fields.get("title")
+            elif "message" in payload_fields:
+                title_candidate = payload_fields.get("message")
+
+    if title_candidate:
+        try:
+            ticket.update_title(str(title_candidate))
+        except Exception:
+            # If updating title fails for any reason, continue without blocking ingestion
+            pass
+
     # Save ticket
     ticket_repository.save(ticket)
 
