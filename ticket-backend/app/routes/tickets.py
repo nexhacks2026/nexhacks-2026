@@ -139,42 +139,53 @@ def create_content_from_payload(content_type: str, payload: dict[str, Any]):
     content_type = content_type.lower()
 
     if content_type == "email":
+        # Handle unified payload structure where all sources send the same fields
+        # For email, use 'id' as thread_id and provide default values for missing fields
         return EmailContent(
-            sender_email=payload.get("from", payload.get("sender_email", "")),
-            recipient_email=payload.get("to", payload.get("recipient_email", "")),
-            subject=payload.get("subject", ""),
+            sender_email=payload.get("from", payload.get("sender_email", payload.get("user", "unknown@unknown.com"))),
+            recipient_email=payload.get("to", payload.get("recipient_email", "nexhacks2026@gmail.com")),
+            subject=payload.get("subject", "No Subject"),
             body=payload.get("body", ""),
             timestamp=parse_timestamp(payload.get("timestamp")),
-            thread_id=payload.get("thread_id"),
+            thread_id=payload.get("thread_id", payload.get("id")),
         )
     elif content_type == "discord":
+        # Use unified fields: 'id' as message_id, 'user' as user_id, 'body' as message_text
         return DiscordContent(
-            channel_id=payload["channel_id"],
-            user_id=payload["user_id"],
-            message_id=payload.get("message_id", ""),
-            message_text=payload.get("message_text", ""),
+            channel_id=payload.get("channel_id", "unknown"),
+            user_id=payload.get("user_id", payload.get("user", "unknown")),
+            message_id=payload.get("message_id", payload.get("id", "")),
+            message_text=payload.get("message_text", payload.get("body", "")),
             timestamp=parse_timestamp(payload.get("timestamp")),
-            username=payload.get("username"),
+            username=payload.get("username", payload.get("user")),
             guild_id=payload.get("guild_id"),
         )
     elif content_type == "github":
+        # Use unified fields: 'repo_url' as repo, 'issue_url' for url, 'user' as author
+        repo = payload.get("repo", payload.get("repo_url", "unknown/unknown"))
+        # Extract repo name from URL if full URL provided
+        if repo and repo != "null" and "github.com" in repo:
+            repo = "/".join(repo.rstrip("/").split("/")[-2:])
+        elif repo == "null":
+            repo = "unknown/unknown"
+            
         return GitHubContent(
-            repo=payload["repo"],
-            issue_number=payload["issue_number"],
-            author=payload["author"],
-            issue_title=payload.get("title", payload.get("issue_title", "")),
+            repo=repo,
+            issue_number=payload.get("issue_number", 0),
+            author=payload.get("author", payload.get("user", "unknown")),
+            issue_title=payload.get("title", payload.get("issue_title", payload.get("subject", ""))),
             issue_body=payload.get("body", payload.get("issue_body", "")),
             timestamp=parse_timestamp(payload.get("timestamp")),
             labels=payload.get("labels"),
-            url=payload.get("url"),
+            url=payload.get("url", payload.get("issue_url")),
         )
     elif content_type == "form":
         return FormContent(
             form_fields=payload.get("fields", payload.get("form_fields", {})),
-            submission_time=parse_timestamp(payload.get("submission_time")),
-            form_id=payload.get("form_id"),
+            submission_time=parse_timestamp(payload.get("submission_time", payload.get("timestamp"))),
+            form_id=payload.get("form_id", payload.get("id")),
             submitter_email=payload.get("submitter_email"),
-            submitter_name=payload.get("submitter_name"),
+            submitter_name=payload.get("submitter_name", payload.get("user")),
         )
     else:
         raise ValueError(f"Unknown content type: {content_type}")
