@@ -44,6 +44,7 @@ class Ticket(BaseTicket):
         resolution_action: AutoResolveAction = AutoResolveAction.NONE,
         suggested_assignee: Optional[str] = None,
         title: Optional[str] = None,
+        description: Optional[str] = None,
     ):
         self._id = id
         self._created_at = created_at
@@ -60,6 +61,7 @@ class Ticket(BaseTicket):
         self._resolution_action = resolution_action
         self._suggested_assignee = suggested_assignee
         self._title = title
+        self._description = description
 
     @classmethod
     def create(
@@ -153,6 +155,21 @@ class Ticket(BaseTicket):
             return content_dict['message_text'][:100]
         return 'Untitled Ticket'
 
+    @property
+    def description(self) -> str:
+        """Get ticket description, falling back to content-based description if not set."""
+        if self._description:
+            return self._description
+        # Fallback to extracting from content
+        content_dict = self._content.to_dict()
+        if 'body' in content_dict:
+            return content_dict['body']
+        elif 'issue_body' in content_dict:
+            return content_dict['issue_body']
+        elif 'message_text' in content_dict:
+            return content_dict['message_text']
+        return ''
+
     def _touch(self) -> None:
         """Update the updated_at timestamp."""
         self._updated_at = datetime.now(timezone.utc)
@@ -210,6 +227,11 @@ class Ticket(BaseTicket):
     def update_title(self, title: str) -> None:
         """Update the ticket title."""
         self._title = title
+        self._touch()
+
+    def update_description(self, description: str) -> None:
+        """Update the ticket description."""
+        self._description = description
         self._touch()
 
     def set_category(self, category: TicketCategory) -> None:
@@ -287,6 +309,7 @@ class Ticket(BaseTicket):
             "resolution_action": self._resolution_action.value,
             "suggested_assignee": self._suggested_assignee,
             "title": self.title,
+            "description": self.description,
         }
 
     def to_json(self) -> str:
@@ -320,6 +343,7 @@ class Ticket(BaseTicket):
             resolution_action=AutoResolveAction(data.get("resolution_action", "NONE")),
             suggested_assignee=data.get("suggested_assignee"),
             title=data.get("title"),
+            description=data.get("description"),
         )
 
     def __repr__(self) -> str:
