@@ -31,6 +31,6 @@ export default defineConfig({
     preview: {
         port: 3002,
         host: true,
-        allowedHosts: ["localhost", "127.0.0.1", "::1", "narr0w.tech"],
+        allowedHosts: true,
     },
 });
