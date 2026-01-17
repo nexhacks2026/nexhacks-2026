@@ -37,3 +37,14 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+  bot_webhook:
+    build:
+      context: ./discord_bot_js
+      dockerfile: Dockerfile
+    expose:
+      - "3000"
+    environment:
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+    restart: unless-stopped
