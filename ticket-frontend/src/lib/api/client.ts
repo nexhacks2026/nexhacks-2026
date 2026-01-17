@@ -309,3 +309,29 @@ export async function getAgentStats(agentId: string): Promise<{
   
   return response.json();
 }
+
+export async function createTicket(ticketData: {
+  source: 'EMAIL' | 'DISCORD' | 'GITHUB' | 'FORM' | 'WEBHOOK';
+  content_type: string;
+  payload: Record<string, any>;
+  metadata?: Record<string, any>;
+}): Promise<{
+  ticket_id: string;
+  status: string;
+  queue: string;
+  position_in_queue: number;
+  estimated_time_to_triage: string;
+  created_at: string;
+}> {
+  const response = await fetch(`${API_BASE_URL}/api/tickets/ingest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(ticketData),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to create ticket: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
