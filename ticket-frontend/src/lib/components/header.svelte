@@ -79,7 +79,7 @@
           class="w-5 h-5"
         >
       </div>
-      <span class="font-semibold text-foreground">Triage Flow</span>
+      <span class="font-semibold text-foreground" style="font-family: monospace; font-size: 1.125rem;">narr0w</span>
     </div>
   </div>
   
