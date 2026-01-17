@@ -1,0 +1,22 @@
+name: Discord Push Notifications
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord notification
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: |
+            **New GitHub Push**
+            **Repo:** {{ EVENT_PAYLOAD.repository.full_name }}
+            **Branch:** {{ EVENT_PAYLOAD.ref }}
+            **Author:** {{ EVENT_PAYLOAD.pusher.name }}
+            **Message:** {{ EVENT_PAYLOAD.head_commit.message }}

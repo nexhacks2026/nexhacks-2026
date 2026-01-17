@@ -4,6 +4,7 @@ import {
   updateTicket as apiUpdateTicket,
   assignTicket,
   releaseTicket,
+  createTicket as apiCreateTicket,
   type BackendTicket
 } from "../api/client"
 import { websocket, type TicketEvent } from "../api/websocket"
@@ -88,6 +89,35 @@ export function mapFrontendStatusToBackend(status: TicketStatus): { queue: strin
 // Map backend priority to frontend (lowercase)
 function mapBackendPriority(priority: string): TicketPriority {
   return priority.toLowerCase() as TicketPriority
+}
+
+// Create new ticket
+export async function addTicket(title: string, description: string, priority: TicketPriority = 'medium'): Promise<string> {
+  try {
+    const response = await apiCreateTicket({
+      source: 'FORM',
+      content_type: 'form',
+      payload: {
+        fields: {
+          title,
+          description,
+        },
+        submission_time: new Date().toISOString(),
+      },
+      metadata: {
+        priority: priority.toUpperCase(),
+        tags: [],
+      },
+    });
+    
+    // Refresh tickets after creation
+    await loadTickets();
+    
+    return response.ticket_id;
+  } catch (error) {
+    console.error('Failed to create ticket:', error);
+    throw error;
+  }
 }
 
 // Generate a color from a string (for assignee avatars)
