@@ -15,6 +15,7 @@ export interface BackendTicket {
   status: 'INBOX' | 'TRIAGE_PENDING' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
   current_queue: 'INBOX' | 'TRIAGE' | 'ASSIGNMENT' | 'ACTIVE' | 'RESOLUTION';
   title?: string;
+  description?: string;
   content: {
     type: string;
     sender_email?: string;
@@ -105,6 +106,7 @@ export async function fetchTicket(ticketId: string): Promise<BackendTicket> {
 
 export async function updateTicket(ticketId: string, updates: {
   title?: string;
+  description?: string;
   status?: string;
   priority?: string;
   category?: string;

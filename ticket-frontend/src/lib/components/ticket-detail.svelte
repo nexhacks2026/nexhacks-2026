@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
-  import { updateTicketStatus, updateTicketTitle, deleteTicket, type Ticket, type TicketStatus, type TicketPriority } from '$lib/stores/tickets';
+  import { updateTicketStatus, updateTicketTitle, updateTicketDescription, deleteTicket, type Ticket, type TicketStatus, type TicketPriority } from '$lib/stores/tickets';
   import AiReasoningPanel from './ai-reasoning-panel.svelte';
   
   interface Props {
@@ -13,8 +13,12 @@
   let isEditingTitle = $state(false);
   let editedTitle = $state('');
   
+  let isEditingDescription = $state(false);
+  let editedDescription = $state('');
+
   $effect(() => {
     editedTitle = ticket.title;
+    editedDescription = ticket.description;
   });
   
   interface StatusOption {
@@ -55,6 +59,9 @@
     dismiss?.();
   }
   
+  // 
+  // Editing the Title
+  // 
   function handleEditTitle(): void {
     isEditingTitle = true;
   }
@@ -73,9 +80,35 @@
     isEditingTitle = false;
   }
   
-  function handleCancelEdit(): void {
+  function handleCancelEditTitle(): void {
     editedTitle = ticket.title;
     isEditingTitle = false;
+  }
+
+  // 
+  // Editing the Description
+  // 
+  function handleEditDescription(): void {
+    isEditingDescription = true;
+  }
+  
+  async function handleSaveDescription(): Promise<void> {
+    if (editedDescription.trim() && editedDescription !== ticket.description) {
+      try {
+        await updateTicketDescription(ticket.id, editedDescription.trim());
+        // Don't mutate ticket directly - the store will reload tickets
+      } catch (error) {
+        console.error('Failed to save description:', error);
+        alert('Failed to update ticket description');
+        editedDescription = ticket.description;
+      }
+    }
+    isEditingDescription = false;
+  }
+  
+  function handleCancelEditDescription(): void {
+    editedDescription = ticket.description;
+    isEditingDescription = false;
   }
   
   let isDeleting = $state(false);
@@ -147,7 +180,7 @@
             </button>
             <button
               type="button"
-              onclick={handleCancelEdit}
+              onclick={handleCancelEditTitle}
               class="p-1.5 rounded hover:bg-muted text-muted-foreground"
               aria-label="Cancel"
             >
@@ -173,9 +206,9 @@
             </button>
           </div>
         {/if}
-        <p class="text-sm text-muted-foreground leading-relaxed">{ticket.description}</p>
       </div>
       
+      <!-- Lowe Stuff -->
       <div class="space-y-4">
        
         <!-- Status Section -->
@@ -195,14 +228,60 @@
           </div>
         </div>
         
-        <!-- Description Section -->
+        <!-- Description + Edit Desc Section -->
         <div class="flex flex-col py-3 border-b border-border/50">
           <span class="text-sm text-muted-foreground mb-2">Description</span>
-          {#if ticket.description}
-            <p class="text-sm text-foreground leading-relaxed">{ticket.description}</p>
-            {:else}
-            <p class="text-sm text-foreground leading-relaxed">Empty</p>
+          {#if isEditingDescription}
+          <div class="flex items-center gap-2 mb-2">
+            <input
+              type="text"
+              bind:value={editedDescription}
+              class="flex-1 text-lg font-semibold bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
+              autofocus
+            />
+            <button
+              type="button"
+              onclick={handleSaveDescription}
+              class="p-1.5 rounded hover:bg-muted text-primary"
+              aria-label="Save"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onclick={handleCancelEditDescription}
+              class="p-1.5 rounded hover:bg-muted text-muted-foreground"
+              aria-label="Cancel"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          {:else}
+            <div class="flex items-start justify-between gap-2 mb-2">
+              {#if ticket.description}
+                <p class="text-sm text-foreground leading-relaxed">{ticket.description}</p>
+              {:else}
+                <p class="text-sm text-foreground leading-relaxed">Empty</p>
+              {/if}
+              
+              <!-- Edit Description Button -->
+              <button
+                type="button"
+                onclick={handleEditDescription}
+                class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Edit description"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+            </div>
           {/if}
+          
         </div>
 
         <!-- Assignee Section -->

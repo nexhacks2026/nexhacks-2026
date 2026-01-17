@@ -183,17 +183,19 @@ function transformBackendTicket(backendTicket: BackendTicket): Ticket {
   }
 
   // Extract description from content
-  let description = ""
-  if (content.body) {
-    description = content.body
-  } else if (content.issue_body) {
-    description = content.issue_body
-  } else if (content.message_text) {
-    description = content.message_text
-  } else if ('form_fields' in content && typeof content.form_fields === 'object' && content.form_fields !== null) {
-    const formFields = content.form_fields as Record<string, any>
-    if ('description' in formFields && typeof formFields.description === 'string') {
-      description = formFields.description
+  let description = backendTicket.description || ""
+  if (!description) {
+    if (content.body) {
+      description = content.body
+    } else if (content.issue_body) {
+      description = content.issue_body
+    } else if (content.message_text) {
+      description = content.message_text
+    } else if ('form_fields' in content && typeof content.form_fields === 'object' && content.form_fields !== null) {
+      const formFields = content.form_fields as Record<string, any>
+      if ('description' in formFields && typeof formFields.description === 'string') {
+        description = formFields.description
+      }
     }
   }
 
@@ -310,6 +312,16 @@ export async function updateTicketTitle(ticketId: string, newTitle: string): Pro
     await loadTickets()
   } catch (error) {
     console.error('Failed to update ticket title:', error)
+    throw error
+  }
+}
+
+export async function updateTicketDescription(ticketId: string, newDescription: string): Promise<void> {
+  try {
+    await apiUpdateTicket(ticketId, { description: newDescription })
+    await loadTickets()
+  } catch (error) {
+    console.error('Failed to update ticket description:', error)
     throw error
   }
 }

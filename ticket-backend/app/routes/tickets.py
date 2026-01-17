@@ -106,6 +106,7 @@ class TriageCompleteRequest(BaseModel):
 class TicketUpdateRequest(BaseModel):
     """Request body for ticket updates."""
     title: Optional[str] = None
+    description: Optional[str] = None
     status: Optional[TicketStatus] = None
     priority: Optional[TicketPriority] = None
     category: Optional[TicketCategory] = None
@@ -396,6 +397,10 @@ async def update_ticket(
     if request.title is not None:
         ticket.update_title(request.title)
         changes["title"] = request.title
+
+    if request.description is not None:
+        ticket.update_description(request.description)
+        changes["description"] = request.description
 
     if request.status is not None:
         ticket.update_status(request.status)
