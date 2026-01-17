@@ -52,7 +52,7 @@ class AuditLogEntry:
             "ticket_id": self.ticket_id,
             "from_queue": self.from_queue.value if self.from_queue else None,
             "to_queue": self.to_queue.value,
-            "reason": reason,
+            "reason": self.reason,
             "actor": self.actor,
         }
 

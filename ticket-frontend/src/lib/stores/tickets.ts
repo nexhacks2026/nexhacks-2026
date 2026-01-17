@@ -1,4 +1,12 @@
-import { writable } from "svelte/store"
+import { writable, derived, get, type Writable, type Readable } from "svelte/store"
+import {
+  fetchTickets,
+  updateTicket as apiUpdateTicket,
+  assignTicket,
+  releaseTicket,
+  type BackendTicket
+} from "../api/client"
+import { websocket, type TicketEvent } from "../api/websocket"
 
 export interface Assignee {
   name: string
@@ -19,6 +27,7 @@ export interface AIReasoning {
   steps: ReasoningStep[]
 }
 
+// Frontend status maps to backend queue-based workflow
 export type TicketStatus = "open" | "in_progress" | "review" | "done"
 export type TicketPriority = "low" | "medium" | "high" | "critical"
 
@@ -33,216 +42,347 @@ export interface Ticket {
   updatedAt: string
   aiReasoning: AIReasoning
   labels: string[]
+  // Backend-specific fields
+  source?: string
+  category?: string
+  currentQueue?: string
+  suggestedAssignee?: string
 }
 
-const initialTickets: Ticket[] = [
-  {
-    id: "TKT-001",
-    title: "Authentication flow breaks on mobile Safari",
-    description:
-      "Users on iOS Safari are experiencing login failures after the recent OAuth update. The redirect callback is not being properly handled.",
-    status: "open",
-    priority: "high",
-    assignee: { name: "Sarah Chen", avatar: "SC", color: "#3b82f6" },
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-15T14:22:00Z",
-    aiReasoning: {
-      summary: "Mobile Safari OAuth redirect handling issue",
-      confidence: 0.92,
-      steps: [
-        {
-          type: "analysis",
-          title: "Analyzing error patterns",
-          content:
-            "Detected 847 failed authentication attempts from iOS Safari 17.x in the last 24 hours. Error clustering shows 94% correlation with redirect_uri mismatch.",
-          timestamp: "14:20:12",
-        },
-        {
-          type: "hypothesis",
-          title: "Root cause hypothesis",
-          content:
-            "Safari's ITP (Intelligent Tracking Prevention) is blocking the OAuth state parameter cookie. This was introduced in Safari 17.2.",
-          timestamp: "14:20:45",
-        },
-        {
-          type: "recommendation",
-          title: "Suggested fix",
-          content:
-            "Implement PKCE flow with session storage fallback instead of relying on cookies for state management. See RFC 7636 for implementation details.",
-          timestamp: "14:21:03",
-        },
-        {
-          type: "context",
-          title: "Related tickets",
-          content:
-            "Similar issue reported in TKT-892 (resolved) and TKT-756 (duplicate). Previous fix involved SameSite=None attribute.",
-          timestamp: "14:21:18",
-        },
-      ],
-    },
-    labels: ["bug", "mobile", "auth"],
-  },
-  {
-    id: "TKT-002",
-    title: "Add dark mode support to dashboard",
-    description:
-      "Implement system-preference-aware dark mode for the main dashboard. Should include smooth transitions and persist user preference.",
-    status: "in_progress",
-    priority: "medium",
-    assignee: { name: "Alex Rivera", avatar: "AR", color: "#8b5cf6" },
-    createdAt: "2024-01-14T09:00:00Z",
-    updatedAt: "2024-01-15T11:45:00Z",
-    aiReasoning: {
-      summary: "Feature implementation with design system integration",
-      confidence: 0.88,
-      steps: [
-        {
-          type: "analysis",
-          title: "Scope assessment",
-          content:
-            "Identified 24 components requiring theme updates. Current design tokens support ~60% of required variants.",
-          timestamp: "11:40:22",
-        },
-        {
-          type: "recommendation",
-          title: "Implementation approach",
-          content:
-            "Recommend CSS custom properties with prefers-color-scheme media query. Use localStorage for persistence with system default fallback.",
-          timestamp: "11:42:15",
-        },
-      ],
-    },
-    labels: ["feature", "ui", "design-system"],
-  },
-  {
-    id: "TKT-003",
-    title: "Database connection pool exhaustion",
-    description:
-      "Production database showing connection pool saturation during peak hours. Response times degrading significantly.",
-    status: "in_progress",
-    priority: "critical",
-    assignee: { name: "Jordan Park", avatar: "JP", color: "#22c55e" },
-    createdAt: "2024-01-15T08:15:00Z",
-    updatedAt: "2024-01-15T15:30:00Z",
-    aiReasoning: {
-      summary: "Connection leak detected in query handler",
-      confidence: 0.96,
-      steps: [
-        {
-          type: "analysis",
-          title: "Metrics analysis",
-          content:
-            "Connection count growing linearly at ~12 connections/hour. Pool max is 100. Leak rate correlates with /api/reports endpoint traffic.",
-          timestamp: "15:25:00",
-        },
-        {
-          type: "hypothesis",
-          title: "Identified leak source",
-          content:
-            "Transaction not being released in error path of generateReport() function. Missing finally block for connection.release().",
-          timestamp: "15:27:33",
-        },
-        {
-          type: "recommendation",
-          title: "Immediate action",
-          content:
-            "Deploy hotfix with proper connection cleanup. Consider implementing connection timeout and automatic pool recycling.",
-          timestamp: "15:28:44",
-        },
-      ],
-    },
-    labels: ["bug", "database", "performance", "urgent"],
-  },
-  {
-    id: "TKT-004",
-    title: "Implement webhook retry mechanism",
-    description:
-      "Add exponential backoff retry logic for failed webhook deliveries. Include dead letter queue for persistently failing webhooks.",
-    status: "review",
-    priority: "medium",
-    assignee: { name: "Morgan Liu", avatar: "ML", color: "#f59e0b" },
-    createdAt: "2024-01-13T14:00:00Z",
-    updatedAt: "2024-01-15T09:00:00Z",
-    aiReasoning: {
-      summary: "PR ready for review with comprehensive test coverage",
-      confidence: 0.91,
-      steps: [
-        {
-          type: "analysis",
-          title: "Code review summary",
-          content:
-            "Implementation follows AWS SQS retry patterns. Test coverage at 94%. No security concerns identified.",
-          timestamp: "09:00:00",
-        },
-        {
-          type: "context",
-          title: "Review checklist",
-          content:
-            "All CI checks passing. Documentation updated. Migration script included for existing webhook configurations.",
-          timestamp: "09:00:00",
-        },
-      ],
-    },
-    labels: ["feature", "infrastructure"],
-  },
-  {
-    id: "TKT-005",
-    title: "Update API rate limiting configuration",
-    description:
-      "Adjust rate limits for enterprise tier customers. Current limits causing issues for high-volume integrations.",
-    status: "done",
-    priority: "low",
-    assignee: { name: "Casey Kim", avatar: "CK", color: "#ec4899" },
-    createdAt: "2024-01-12T11:00:00Z",
-    updatedAt: "2024-01-14T16:00:00Z",
-    aiReasoning: {
-      summary: "Configuration update deployed successfully",
-      confidence: 1.0,
-      steps: [
-        {
-          type: "context",
-          title: "Deployment summary",
-          content:
-            "Rate limits updated for enterprise tier: 10,000 req/min (was 1,000). Monitoring shows no anomalies post-deployment.",
-          timestamp: "16:00:00",
-        },
-      ],
-    },
-    labels: ["config", "enterprise"],
-  },
-  {
-    id: "TKT-006",
-    title: "Memory leak in real-time notifications",
-    description:
-      "WebSocket connections not being properly cleaned up on client disconnect. Server memory growing unbounded.",
-    status: "open",
-    priority: "high",
-    assignee: null,
-    createdAt: "2024-01-15T13:00:00Z",
-    updatedAt: "2024-01-15T13:00:00Z",
-    aiReasoning: {
-      summary: "Awaiting triage - initial analysis complete",
-      confidence: 0.78,
-      steps: [
-        {
-          type: "analysis",
-          title: "Initial assessment",
-          content:
-            "Heap dumps show retained WebSocket handler instances. Event listeners not being removed on disconnect event.",
-          timestamp: "13:00:00",
-        },
-      ],
-    },
-    labels: ["bug", "websocket", "memory"],
-  },
-]
+// Map backend queue/status to frontend status
+function mapBackendStatusToFrontend(backendTicket: BackendTicket): TicketStatus {
+  const queue = backendTicket.current_queue
+  const status = backendTicket.status
 
-export const tickets = writable<Ticket[]>(initialTickets)
+  // Map based on queue primarily
+  switch (queue) {
+    case 'INBOX':
+    case 'TRIAGE':
+    case 'ASSIGNMENT':
+      return 'open'
+    case 'ACTIVE':
+      return 'in_progress'
+    case 'RESOLUTION':
+      return status === 'CLOSED' ? 'done' : 'review'
+    default:
+      return 'open'
+  }
+}
 
-export function updateTicketStatus(ticketId: string, newStatus: TicketStatus): void {
-  tickets.update((items) =>
-    items.map((ticket) =>
-      ticket.id === ticketId ? { ...ticket, status: newStatus, updatedAt: new Date().toISOString() } : ticket,
-    ),
+// Map frontend status to backend queue
+export function mapFrontendStatusToBackend(status: TicketStatus): { queue: string; backendStatus: string } {
+  switch (status) {
+    case 'open':
+      return { queue: 'ASSIGNMENT', backendStatus: 'ASSIGNED' }
+    case 'in_progress':
+      return { queue: 'ACTIVE', backendStatus: 'IN_PROGRESS' }
+    case 'review':
+      return { queue: 'RESOLUTION', backendStatus: 'RESOLVED' }
+    case 'done':
+      return { queue: 'RESOLUTION', backendStatus: 'CLOSED' }
+    default:
+      return { queue: 'ASSIGNMENT', backendStatus: 'ASSIGNED' }
+  }
+}
+
+// Map backend priority to frontend (lowercase)
+function mapBackendPriority(priority: string): TicketPriority {
+  return priority.toLowerCase() as TicketPriority
+}
+
+// Generate a color from a string (for assignee avatars)
+function stringToColor(str: string): string {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const colors = ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4']
+  return colors[Math.abs(hash) % colors.length]
+}
+
+// Convert backend ticket to frontend format
+function transformBackendTicket(backendTicket: BackendTicket): Ticket {
+  const content = backendTicket.content
+
+  // Extract title from content
+  let title = 'Untitled Ticket'
+  if (content.subject) {
+    title = content.subject
+  } else if (content.issue_title) {
+    title = content.issue_title
+  } else if (content.message_text) {
+    title = content.message_text.slice(0, 100)
+  }
+
+  // Extract description from content
+  let description = ''
+  if (content.body) {
+    description = content.body
+  } else if (content.issue_body) {
+    description = content.issue_body
+  } else if (content.message_text) {
+    description = content.message_text
+  }
+
+  // Build assignee object if present
+  let assignee: Assignee | null = null
+  if (backendTicket.assignee) {
+    const name = backendTicket.assignee
+    assignee = {
+      name,
+      avatar: name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2),
+      color: stringToColor(name),
+    }
+  }
+
+  // Build AI reasoning from backend data
+  const aiReasoning: AIReasoning = {
+    summary: backendTicket.ai_reasoning?.summary || `Ticket from ${backendTicket.source}`,
+    confidence: backendTicket.ai_reasoning?.confidence || 0.5,
+    steps: [],
+  }
+
+  // Add reasoning steps if available
+  if (backendTicket.ai_reasoning) {
+    if (backendTicket.category) {
+      aiReasoning.steps.push({
+        type: 'analysis',
+        title: 'Category Classification',
+        content: `Classified as ${backendTicket.category}`,
+        timestamp: new Date(backendTicket.updated_at).toLocaleTimeString(),
+      })
+    }
+    if (backendTicket.ai_reasoning.priority) {
+      aiReasoning.steps.push({
+        type: 'recommendation',
+        title: 'Priority Assessment',
+        content: `Set priority to ${backendTicket.priority}`,
+        timestamp: new Date(backendTicket.updated_at).toLocaleTimeString(),
+      })
+    }
+    if (backendTicket.suggested_assignee) {
+      aiReasoning.steps.push({
+        type: 'recommendation',
+        title: 'Suggested Assignee',
+        content: `Recommend assigning to ${backendTicket.suggested_assignee}`,
+        timestamp: new Date(backendTicket.updated_at).toLocaleTimeString(),
+      })
+    }
+  }
+
+  return {
+    id: backendTicket.id,
+    title,
+    description,
+    status: mapBackendStatusToFrontend(backendTicket),
+    priority: mapBackendPriority(backendTicket.priority),
+    assignee,
+    createdAt: backendTicket.created_at,
+    updatedAt: backendTicket.updated_at,
+    aiReasoning,
+    labels: backendTicket.tags,
+    source: backendTicket.source,
+    category: backendTicket.category || undefined,
+    currentQueue: backendTicket.current_queue,
+    suggestedAssignee: backendTicket.suggested_assignee || undefined,
+  }
+}
+
+// Store state
+const ticketsWritable: Writable<Ticket[]> = writable<Ticket[]>([])
+const loadingWritable: Writable<boolean> = writable<boolean>(false)
+const errorWritable: Writable<string | null> = writable<string | null>(null)
+const currentAgentWritable: Writable<string | null> = writable<string | null>(null)
+
+// Exported stores
+export const tickets: Readable<Ticket[]> = { subscribe: ticketsWritable.subscribe }
+export const loading: Readable<boolean> = { subscribe: loadingWritable.subscribe }
+export const error: Readable<string | null> = { subscribe: errorWritable.subscribe }
+export const currentAgent: Writable<string | null> = currentAgentWritable
+
+// Derived stores
+export const ticketsByStatus: Readable<Record<TicketStatus, Ticket[]>> = derived(ticketsWritable, ($tickets: Ticket[]) => {
+  return {
+    open: $tickets.filter((t: Ticket) => t.status === 'open'),
+    in_progress: $tickets.filter((t: Ticket) => t.status === 'in_progress'),
+    review: $tickets.filter((t: Ticket) => t.status === 'review'),
+    done: $tickets.filter((t: Ticket) => t.status === 'done'),
+  }
+})
+
+// Actions
+
+export async function loadTickets(): Promise<void> {
+  loadingWritable.set(true)
+  errorWritable.set(null)
+
+  try {
+    const backendTickets = await fetchTickets({ limit: 100 })
+    const frontendTickets = backendTickets.map(transformBackendTicket)
+    ticketsWritable.set(frontendTickets)
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Failed to load tickets'
+    errorWritable.set(message)
+    console.error('Failed to load tickets:', e)
+  } finally {
+    loadingWritable.set(false)
+  }
+}
+
+export async function updateTicketStatus(ticketId: string, newStatus: TicketStatus): Promise<void> {
+  const currentTickets = get(ticketsWritable)
+  const ticket = currentTickets.find((t: Ticket) => t.id === ticketId)
+
+  if (!ticket) return
+
+  // Optimistically update local state
+  ticketsWritable.update((items: Ticket[]) =>
+    items.map((t: Ticket) =>
+      t.id === ticketId
+        ? { ...t, status: newStatus, updatedAt: new Date().toISOString() }
+        : t
+    )
   )
+
+  // Note: Full status changes require queue moves which need backend coordination
+  // For now, we just update locally - the backend sync will happen via WebSocket
 }
+
+export async function updateTicketPriority(ticketId: string, newPriority: TicketPriority): Promise<void> {
+  try {
+    await apiUpdateTicket(ticketId, { priority: newPriority.toUpperCase() })
+
+    ticketsWritable.update((items: Ticket[]) =>
+      items.map((t: Ticket) =>
+        t.id === ticketId
+          ? { ...t, priority: newPriority, updatedAt: new Date().toISOString() }
+          : t
+      )
+    )
+  } catch (e) {
+    console.error('Failed to update priority:', e)
+  }
+}
+
+export async function assignTicketToAgent(ticketId: string, agentId: string): Promise<void> {
+  try {
+    await assignTicket(ticketId, agentId)
+
+    // Update local state
+    ticketsWritable.update((items: Ticket[]) =>
+      items.map((t: Ticket) => {
+        if (t.id === ticketId) {
+          return {
+            ...t,
+            assignee: {
+              name: agentId,
+              avatar: agentId.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2),
+              color: stringToColor(agentId),
+            },
+            status: 'in_progress' as TicketStatus,
+            updatedAt: new Date().toISOString(),
+          }
+        }
+        return t
+      })
+    )
+  } catch (e) {
+    console.error('Failed to assign ticket:', e)
+  }
+}
+
+export async function releaseTicketFromAgent(ticketId: string, agentId: string): Promise<void> {
+  try {
+    await releaseTicket(ticketId, agentId)
+
+    ticketsWritable.update((items: Ticket[]) =>
+      items.map((t: Ticket) =>
+        t.id === ticketId
+          ? { ...t, assignee: null, status: 'open' as TicketStatus, updatedAt: new Date().toISOString() }
+          : t
+      )
+    )
+  } catch (e) {
+    console.error('Failed to release ticket:', e)
+  }
+}
+
+// WebSocket integration
+let wsUnsubscribe: (() => void) | null = null
+
+export function connectWebSocket(agentId: string): void {
+  currentAgentWritable.set(agentId)
+  websocket.connect(agentId)
+
+  // Listen for ticket events
+  wsUnsubscribe = websocket.onEvent(handleWebSocketEvent)
+}
+
+export function disconnectWebSocket(): void {
+  if (wsUnsubscribe) {
+    wsUnsubscribe()
+    wsUnsubscribe = null
+  }
+  websocket.disconnect()
+  currentAgentWritable.set(null)
+}
+
+function handleWebSocketEvent(event: TicketEvent): void {
+  console.log('WebSocket event:', event)
+
+  switch (event.event) {
+    case 'ticket.created':
+      // Reload tickets to get the new one
+      loadTickets()
+      break
+
+    case 'ticket.updated':
+      if (event.data.ticket_id) {
+        // Reload the specific ticket or all tickets
+        loadTickets()
+      }
+      break
+
+    case 'ticket.moved':
+      if (event.data.ticket_id) {
+        loadTickets()
+      }
+      break
+
+    case 'ticket.assigned':
+      if (event.data.ticket_id && event.data.assignee) {
+        ticketsWritable.update((items: Ticket[]) =>
+          items.map((t: Ticket) => {
+            if (t.id === event.data.ticket_id) {
+              const name = event.data.assignee as string
+              return {
+                ...t,
+                assignee: {
+                  name,
+                  avatar: name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2),
+                  color: stringToColor(name),
+                },
+              }
+            }
+            return t
+          })
+        )
+      }
+      break
+
+    case 'subscribed':
+    case 'unsubscribed':
+    case 'pong':
+      // Ignore these
+      break
+
+    default:
+      console.log('Unhandled WebSocket event:', event.event)
+  }
+}
+
+// Initialize - try to load tickets on module load
+// But don't block if backend is not available
+loadTickets().catch(() => {
+  console.log('Backend not available, using empty ticket list')
+})

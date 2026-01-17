@@ -1,6 +1,6 @@
 <script lang="ts">
   import TicketCard from './ticket-card.svelte';
-  import { tickets, updateTicketStatus, type Ticket, type TicketStatus } from '../stores/tickets.ts';
+  import { tickets, updateTicketStatus, type Ticket, type TicketStatus } from '$lib/stores/tickets';
   
   interface Props {
     onselectTicket?: (event: { id: string }) => void;

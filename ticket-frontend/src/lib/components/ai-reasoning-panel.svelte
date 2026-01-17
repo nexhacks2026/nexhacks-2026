@@ -1,6 +1,6 @@
 <script lang="ts">
   import { slide, fade } from 'svelte/transition';
-  import type { AIReasoning, ReasoningStep } from '../stores/tickets.ts';
+  import type { AIReasoning, ReasoningStep } from '$lib/stores/tickets';
   
   interface Props {
     reasoning: AIReasoning;

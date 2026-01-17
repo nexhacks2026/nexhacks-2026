@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Ticket, TicketPriority } from '../stores/tickets.ts';
+  import type { Ticket, TicketPriority } from '$lib/stores/tickets';
   
   interface Props {
     ticket: Ticket;

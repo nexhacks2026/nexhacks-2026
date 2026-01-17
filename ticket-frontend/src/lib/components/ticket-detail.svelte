@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
-  import { updateTicketStatus, type Ticket, type TicketStatus, type TicketPriority } from '../stores/tickets.ts';
+  import { updateTicketStatus, type Ticket, type TicketStatus, type TicketPriority } from '$lib/stores/tickets';
   import AiReasoningPanel from './ai-reasoning-panel.svelte';
   
   interface Props {
