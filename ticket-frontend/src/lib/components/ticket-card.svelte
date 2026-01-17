@@ -39,15 +39,15 @@
   onclick={onselect}
 >
   <div class="flex items-start justify-between gap-2 mb-2">
-    <span class="text-xs font-mono text-muted-foreground">{ticket.id}</span>
+    <h4 class="font-medium text-foreground text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+    {ticket.title}
+    </h4>
     <span class="text-xs px-2 py-0.5 rounded-full border capitalize {priorityStyles[ticket.priority]}">
       {ticket.priority}
     </span>
   </div>
   
-  <h4 class="font-medium text-foreground text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-    {ticket.title}
-  </h4>
+  
   
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-2">
