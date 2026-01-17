@@ -17,7 +17,6 @@
   
   const columns: Column[] = [
     { id: 'inbox', label: 'Inbox', color: 'bg-gray-500' },
-    { id: 'triage_pending', label: 'Triage', color: 'bg-yellow-500' },
     { id: 'assigned', label: 'Assigned', color: 'bg-blue-500' },
     { id: 'in_progress', label: 'In Progress', color: 'bg-purple-500' },
     { id: 'resolved', label: 'Resolved', color: 'bg-green-500' }
@@ -27,11 +26,22 @@
   let dragOverColumn: TicketStatus | null = $state(null);
   
   function getTicketsByStatus(status: TicketStatus): Ticket[] {
+    // Show triage_pending tickets in inbox column
+    if (status === 'inbox') {
+      return $tickets.filter(t => t.status === 'inbox' || t.status === 'triage_pending');
+    }
     return $tickets.filter(t => t.status === status);
   }
   
+  function canDragTicket(ticket: Ticket): boolean {
+    // Prevent dragging tickets with triage_pending status
+    return ticket.status !== 'triage_pending';
+  }
+  
   function handleDragStart(ticket: Ticket): void {
-    draggedTicket = ticket;
+    if (canDragTicket(ticket)) {
+      draggedTicket = ticket;
+    }
   }
   
   function handleDragOver(event: DragEvent, columnId: TicketStatus): void {
@@ -85,6 +95,7 @@
             <TicketCard 
               {ticket}
               isSelected={selectedTicketId === ticket.id}
+              isDraggable={canDragTicket(ticket)}
               onselect={() => handleSelectTicket(ticket)}
               ondragstart={() => handleDragStart(ticket)}
             />

@@ -7,7 +7,6 @@
     title: '',
     description: '',
     priority: 'medium' as 'low' | 'medium' | 'high' | 'critical',
-    category: '' as '' | 'billing' | 'technical_support' | 'feature_request' | 'bug_report' | 'admin' | 'other',
     tags: ''
   });
   
@@ -18,7 +17,6 @@
       title: '',
       description: '',
       priority: 'medium',
-      category: '',
       tags: ''
     };
   }
@@ -41,7 +39,7 @@
         ticketForm.title,
         ticketForm.description,
         ticketForm.priority,
-        ticketForm.category || undefined,
+        undefined,
         tags.length > 0 ? tags : undefined
       );
       
@@ -105,24 +103,6 @@
             <option value="medium">Medium</option>
             <option value="high">High</option>
             <option value="critical">Critical</option>
-          </select>
-        </div>
-        
-        <!-- Category -->
-        <div>
-          <label for="ticket-category" class="block text-sm font-medium text-foreground mb-1">Category</label>
-          <select
-            id="ticket-category"
-            bind:value={ticketForm.category}
-            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="">Select category (optional)</option>
-            <option value="billing">Billing</option>
-            <option value="technical_support">Technical Support</option>
-            <option value="feature_request">Feature Request</option>
-            <option value="bug_report">Bug Report</option>
-            <option value="admin">Admin</option>
-            <option value="other">Other</option>
           </select>
         </div>
         

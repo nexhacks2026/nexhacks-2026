@@ -4,11 +4,12 @@
   interface Props {
     ticket: Ticket;
     isSelected?: boolean;
+    isDraggable?: boolean;
     onselect?: () => void;
     ondragstart?: () => void;
   }
   
-  let { ticket, isSelected = false, onselect, ondragstart }: Props = $props();
+  let { ticket, isSelected = false, isDraggable = true, onselect, ondragstart }: Props = $props();
   
   const priorityStyles: Record<TicketPriority, string> = {
     critical: 'bg-destructive/10 text-destructive border-destructive/30',
@@ -33,23 +34,26 @@
 </script>
 
 <button
-  class="w-full text-left p-4 rounded-lg border transition-all duration-200 cursor-pointer group {isSelected ? 'bg-primary/5 border-primary ring-1 ring-primary/50' : 'bg-muted border-border hover:border-muted-foreground'}"
-  draggable="true"
+  class="w-full text-left p-4 rounded-lg border transition-all duration-200 group relative overflow-hidden {isSelected ? 'bg-primary/5 border-primary ring-1 ring-primary/50' : 'bg-muted border-border hover:border-muted-foreground'} {isDraggable ? 'cursor-pointer' : 'cursor-default'}"
+  draggable={isDraggable}
   ondragstart={ondragstart}
   onclick={onselect}
 >
-  <div class="flex items-start justify-between gap-2 mb-2">
-    <h4 class="font-medium text-foreground text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+  {#if !isDraggable}
+    <div class="absolute inset-0 triage-gradient pointer-events-none"></div>
+  {/if}
+  <div class="flex items-start justify-between gap-2 mb-2 relative z-10">
+    <h4 class="font-medium text-foreground text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors relative z-10">
     {ticket.title}
     </h4>
-    <span class="text-xs px-2 py-0.5 rounded-full border capitalize {priorityStyles[ticket.priority]}">
+    <span class="text-xs px-2 py-0.5 rounded-full border capitalize relative z-10 {priorityStyles[ticket.priority]}">
       {ticket.priority}
     </span>
   </div>
   
   
   
-  <div class="flex items-center justify-between">
+  <div class="flex items-center justify-between relative z-10">
     <div class="flex items-center gap-2">
       {#if ticket.assignee}
         <div 
@@ -68,7 +72,7 @@
       {/if}
     </div>
     
-    <div class="flex items-center gap-2 text-xs text-muted-foreground">
+    <div class="flex items-center gap-2 text-xs text-muted-foreground relative z-10">
       {#if ticket.aiReasoning}
         <div class="flex items-center gap-1 text-accent" title="AI analysis available">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,3 +99,28 @@
     </div>
   {/if}
 </button>
+
+<style>
+  @keyframes triageMove {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .triage-gradient {
+    background: linear-gradient(
+      135deg,
+      rgba(250, 204, 21, 0.35),
+      rgba(234, 179, 8, 0.5),
+      rgba(250, 204, 21, 0.35),
+      rgba(225, 170, 5, 0.837)
+    );
+    background-size: 200% 200%;
+    animation: triageMove 2s ease-in-out infinite;
+    border: 2px solid rgba(234, 179, 8, 0.6);
+    border-radius: 0.5rem;
+  }
+</style>
