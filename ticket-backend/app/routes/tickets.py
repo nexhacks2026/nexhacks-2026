@@ -371,7 +371,7 @@ async def update_ticket(
         changes["title"] = request.title
 
     if request.status is not None:
-        ticket.status = request.status
+        ticket.update_status(request.status)
         changes["status"] = request.status.value
 
     if request.priority is not None:
