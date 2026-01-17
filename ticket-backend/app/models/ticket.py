@@ -202,6 +202,11 @@ class Ticket(BaseTicket):
         self._priority = priority
         self._touch()
 
+    def update_status(self, status: TicketStatus) -> None:
+        """Update the ticket status directly (bypasses transition validation)."""
+        self._status = status
+        self._touch()
+
     def update_title(self, title: str) -> None:
         """Update the ticket title."""
         self._title = title

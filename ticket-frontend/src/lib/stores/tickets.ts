@@ -391,7 +391,7 @@ export async function releaseTicketFromAgent(ticketId: string, agentId: string):
     ticketsWritable.update((items: Ticket[]) =>
       items.map((t: Ticket) =>
         t.id === ticketId
-          ? { ...t, assignee: null, status: 'open' as TicketStatus, updatedAt: new Date().toISOString() }
+          ? { ...t, assignee: null, status: 'inbox' as TicketStatus, updatedAt: new Date().toISOString() }
           : t
       )
     )
