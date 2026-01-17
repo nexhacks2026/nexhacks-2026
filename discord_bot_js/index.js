@@ -22,7 +22,7 @@ client.on("messageCreate", async (message) => {
   if (message.channel.name !== "add-tasks") return;
   console.log(`Message from ${message.author.username}: ${message.content}`);
   try {
-    await fetch(webhookProdUrl, {
+    await fetch(webhookTestUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
