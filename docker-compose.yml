@@ -19,6 +19,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - N8N_AI_WEBHOOK_URL=${N8N_AI_WEBHOOK_URL}
+      - N8N_RESOLUTION_WEBHOOK_URL=${N8N_RESOLUTION_WEBHOOK_URL}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
