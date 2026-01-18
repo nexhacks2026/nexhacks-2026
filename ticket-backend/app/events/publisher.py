@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 from typing import Any, Optional
 import asyncio
+import httpx
 
 from app.models import Ticket, QueueType
 from app.websockets import connection_manager
@@ -114,7 +115,7 @@ class EventPublisher:
         )
         
 
-    async def publish_coding_agent_trigger(ticket: Ticket) -> None:
+    async def publish_coding_agent_trigger(self, ticket: Ticket) -> None:
         """Trigger n8n webhook for coding agent when a ticket has coding tags """
         payload = {
             "ticket_id": ticket.id,
