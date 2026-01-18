@@ -8,11 +8,13 @@ export interface User {
 // Static list of users
 export const users: User[] = [
   { id: "user-0", name: "Admin User" },
-  { id: "user-1", name: "Austin Sternberg" },
-  { id: "user-2", name: "Andrew Roddy" },
-  { id: "user-3", name: "TJ Raklovits" },
-  { id: "user-4", name: "Mason Bair" },
-  { id: "user-5", name: "Noah Struck" },
+  { id: "user-1", name: "IT Person" },
+  { id: "user-2", name: "Frontend Developer" },
+  { id: "user-3", name: "Backend Developer" },
+  { id: "user-4", name: "Databse Developer" },
+  { id: "user-5", name: "UI Designer" },
+  { id: "user-6", name: "AI Engineer" },
+  { id: "user-7", name: "Network Engineer" },
 ];
 
 // Local storage key for persisting user

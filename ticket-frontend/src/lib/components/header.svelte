@@ -160,7 +160,7 @@
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-foreground">Switch User</h2>
         <button onclick={closeUserModal} class="text-muted-foreground hover:text-foreground" aria-label="Close modal">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class=" cursor-pointer w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -170,7 +170,7 @@
         {#each users as user}
           <button
             onclick={() => handleSwitchUser(user)}
-            class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors {$currentUser?.id === user.id ? 'bg-muted ring-2 ring-primary' : ''}"
+            class="cursor-pointer w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors {$currentUser?.id === user.id ? 'bg-muted ring-2 ring-primary' : ''}"
           >
             <div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-sm font-medium text-secondary-foreground">
               {getUserInitials(user.name)}
