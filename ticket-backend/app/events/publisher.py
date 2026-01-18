@@ -96,13 +96,24 @@ class EventPublisher:
         """Publish ticket.triage_pending event - triggers n8n AI workflow."""
         from app.services.user_service import user_service
 
+        # Prepare content for AI analysis (TicketData schema)
+        content_data = {
+            "subject": ticket.title,
+            "body": ticket.content.extract_body(),
+            "message_text": getattr(ticket.content, "message_text", None),
+            "issue_title": getattr(ticket.content, "issue_title", None),
+        }
+
         await self._publish_event(
             event_type="ticket.triage_pending",
             data={
-                "ticket_id": ticket.id,
+                "id": ticket.id,
+                "ticket_id": ticket.id, # Keep for other subscribers event if AI uses 'id'
                 "source": ticket.source.value,
-                "content_preview": ticket.content.extract_body()[:500],
+                "content": content_data,
+                "content_preview": ticket.content.extract_body()[:500], # Keep legacy
                 "priority": ticket.priority.value,
+                "tags": ticket.tags,
                 "available_agents": user_service.get_available_agents(),
             },
             ticket=ticket,
@@ -169,12 +180,15 @@ class EventPublisher:
             channels=channels,
         )
 
-        # TODO: Send to external webhook (n8n) if configured
-        # This would be an HTTP POST to self._external_webhook_url
-        # For now, just log that we would send it
         if self._external_webhook_url:
-            # In production, use httpx or aiohttp to POST to the webhook
-            pass
+            try:
+                payload = {**data, "event": event_type}
+                
+                async with httpx.AsyncClient() as client:
+                    await client.post(self._external_webhook_url, json=payload, timeout=5.0)
+            except Exception as e:
+                # Log error but don't fail the operation
+                print(f"Failed to send webhook for {event_type}: {e}")
 
 
 # Global event publisher instance
