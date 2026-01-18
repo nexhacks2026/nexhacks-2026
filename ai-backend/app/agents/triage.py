@@ -57,9 +57,11 @@ Output schema:
                 agents_list.append(
                     f"- ID: {agent.get('id')} | Name: {agent.get('name')} | "
                     f"Status: {agent.get('status')} | Load: {agent.get('current_load')} | "
-                    f"Skills: {skills_str}"
                 )
             agents_context = "\n".join(agents_list)
+            
+        logger.info(f"Available agents for triage: {ticket.available_agents}")
+        logger.info(f"Formatted agents context: {agents_context}")
 
         user_content = f"""
 Ticket Source: {ticket.source}
