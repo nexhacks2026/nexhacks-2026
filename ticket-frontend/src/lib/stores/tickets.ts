@@ -9,9 +9,10 @@ import {
   type BackendTicket
 } from "../api/client"
 import { websocket, type TicketEvent } from "../api/websocket"
-import { currentUser } from "./users"
+import { currentUser, getUserById } from "./users"
 
 export interface Assignee {
+  id: string
   name: string
   avatar: string
   color: string
@@ -208,11 +209,14 @@ function transformBackendTicket(backendTicket: BackendTicket): Ticket {
     }
   }
 
-  // Build assignee object if present
+  // Build assignee object if present (backend sends user ID)
   let assignee: Assignee | null = null
   if (backendTicket.assignee) {
-    const name = backendTicket.assignee
+    const assigneeId = backendTicket.assignee
+    const user = getUserById(assigneeId)
+    const name = user?.name || assigneeId
     assignee = {
+      id: assigneeId,
       name,
       avatar: name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2),
       color: stringToColor(name),
@@ -294,8 +298,8 @@ export const tickets: Readable<Ticket[]> = derived(
       return $tickets
     }
 
-    // Regular users only see tickets assigned to them
-    return $tickets.filter(t => t.assignee?.name === $currentUser?.name)
+    // Regular users only see tickets assigned to them (compare by ID)
+    return $tickets.filter(t => t.assignee?.id === $currentUser?.id)
   }
 )
 
@@ -477,10 +481,14 @@ function handleWebSocketEvent(event: TicketEvent): void {
         ticketsWritable.update((items: Ticket[]) =>
           items.map((t: Ticket) => {
             if (t.id === event.data.ticket_id) {
-              const name = event.data.assignee as string
+              const assigneeId = event.data.assignee as string
+              const user = getUserById(assigneeId)
+              const name = user?.name || assigneeId
               return {
                 ...t,
+                status: 'assigned' as TicketStatus,
                 assignee: {
+                  id: assigneeId,
                   name,
                   avatar: name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2),
                   color: stringToColor(name),

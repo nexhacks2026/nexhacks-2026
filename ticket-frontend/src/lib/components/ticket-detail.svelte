@@ -43,7 +43,7 @@
   );
   
   // Check if status changes should be disabled (for triage tickets)
-  let isStatusLocked = $derived(ticket.status === 'triage_pending');
+  let isStatusLocked = $derived(ticket.status === 'triage_pending' || ticket.status === 'triaging');
   
   // Only admin can delete tickets
   let canDelete = $derived($currentUser?.id === 'user-0');
@@ -62,15 +62,15 @@
     updateTicketStatus(ticket.id, newStatus);
   }
   
-  async function handleAssigneeChange(userName: string): Promise<void> {
+  async function handleAssigneeChange(userId: string): Promise<void> {
     try {
-      if (userName) {
+      if (userId) {
         // If reassigning, just assign directly (backend handles reassignment)
-        await assignTicketToAgent(ticket.id, userName);
+        await assignTicketToAgent(ticket.id, userId);
       } else {
         // If unassigning, release the ticket
         if (ticket.assignee) {
-          await releaseTicketFromAgent(ticket.id, ticket.assignee.name);
+          await releaseTicketFromAgent(ticket.id, ticket.assignee.id);
         }
       }
     } catch (error) {
@@ -340,14 +340,14 @@
           <div class="py-3 border-b border-border/50">
             <span class="text-sm text-muted-foreground block mb-2">Assigned To</span>
             <select
-              value={ticket.assignee?.name || ''}
+              value={ticket.assignee?.id || ''}
               onchange={(e) => handleAssigneeChange(e.currentTarget.value)}
               disabled={$currentUser?.id !== 'user-0'}
               class="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="">Unassigned</option>
               {#each users.filter(u => u.id !== 'user-0') as user}
-                <option value={user.name}>{user.name}</option>
+                <option value={user.id}>{user.name}</option>
               {/each}
             </select>
           </div>

@@ -3,6 +3,7 @@ import os
 import logging
 from typing import Optional, Any
 from app.models import Ticket
+from app.services.user_service import user_service
 
 
 class AIClient:
@@ -21,6 +22,8 @@ class AIClient:
         try:
             # Prepare payload matching ai-backend TicketData schema
             payload = ticket.to_dict()
+            # Include available agents for AI to suggest assignees
+            payload["available_agents"] = user_service.get_available_agents()
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, json=payload, timeout=30.0)

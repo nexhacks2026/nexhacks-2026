@@ -136,6 +136,8 @@ class QueueManager:
         Apply AI triage results to ticket and move to appropriate queue.
         This runs in the background, so we must be careful with state.
         """
+        from app.models import TicketStatus
+
         # Update ticket fields
         ticket.log_reasoning(result)
 
@@ -157,11 +159,27 @@ class QueueManager:
             except ValueError:
                 pass
 
+        # Set suggested assignee if provided
+        suggested_assignee = result.get("suggested_assignee")
+        if suggested_assignee:
+            ticket.set_suggested_assignee(suggested_assignee)
+
+        # Add AI-suggested tags (merge with existing)
+        ai_tags = result.get("tags", [])
+        for tag in ai_tags:
+            ticket.add_tag(tag)
+
         # Determine queue move based on confidence
         conf = result.get("confidence", 0)
 
         # >= 0.8: High confidence -> Auto-assign (move to ASSIGNMENT)
         if conf >= 0.8:
+            # Actually assign the ticket if AI suggested an assignee
+            if suggested_assignee:
+                ticket.assign(suggested_assignee)
+            else:
+                # No assignee suggestion, just update status
+                ticket.update_status(TicketStatus.ASSIGNED)
             self.move_ticket(
                 ticket.id,
                 QueueType.INBOX,
