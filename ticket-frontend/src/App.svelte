@@ -14,6 +14,7 @@
     type Ticket 
   } from '$lib/stores/tickets';
   import { websocket } from '$lib/api/websocket';
+  import { serviceStatus } from '$lib/api/status';
 
   let selectedTicketId: string | null = $state(null);
   let selectedTicket: Ticket | null = $state(null);
@@ -26,6 +27,9 @@
   onMount(() => {
     // Connect to WebSocket for real-time updates
     connectWebSocket(agentId);
+    
+    // Start polling service status
+    serviceStatus.startPolling();
     
     // Load tickets from backend
     loadTickets();
@@ -44,6 +48,7 @@
   onDestroy(() => {
     disconnectWebSocket();
     unsubscribeWs();
+    serviceStatus.stopPolling();
   });
 
   function handleSelectTicket(event: { id: string }) {
@@ -80,38 +85,40 @@
 
     <!-- Database Live Indicator -->
     <div class="z-50 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
-      {wsStatus === 'connected' ? 'bg-green-500/20 text-green-400' : 
-      wsStatus === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
+      {$serviceStatus.database === 'connected' ? 'bg-green-500/20 text-green-400' : 
+      $serviceStatus.database === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
       'bg-red-500/20 text-red-400'}">
       <span class="w-2 h-2 rounded-full 
-        {wsStatus === 'connected' ? 'bg-green-500' : 
-        wsStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
+        {$serviceStatus.database === 'connected' ? 'bg-green-500' : 
+        $serviceStatus.database === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
         'bg-red-500'}"></span>
-      {wsStatus === 'connected' ? 'DB Live' : wsStatus === 'DB connecting' ? 'DB Connecting...' : 'DB Offline'}
+      {$serviceStatus.database === 'connected' ? 'DB Live' : $serviceStatus.database === 'connecting' ? 'DB Connecting...' : 'DB Offline'}
     </div>
 
     <!-- n8n live indicator (NO FUNCTIONALITY YET) -->
     <div class="mt-2 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
-      {wsStatus === 'connected' ? 'bg-pink-500/20 text-pink-400' : 
-      wsStatus === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
+      {$serviceStatus.n8n === 'connected' ? 'bg-pink-500/20 text-pink-400' : 
+      $serviceStatus.n8n === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
+      $serviceStatus.n8n === 'unknown' ? 'bg-gray-500/20 text-gray-400' :
       'bg-red-500/20 text-red-400'}">
       <span class="w-2 h-2 rounded-full 
-        {wsStatus === 'connected' ? 'bg-pink-500' : 
-        wsStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
+        {$serviceStatus.n8n === 'connected' ? 'bg-pink-500' : 
+        $serviceStatus.n8n === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
+        $serviceStatus.n8n === 'unknown' ? 'bg-gray-500' :
         'bg-red-500'}"></span>
-      {wsStatus === 'connected' ? 'n8n Live' : wsStatus === 'n8n connecting' ? 'n8n Connecting...' : 'n8n Offline'}
+      {$serviceStatus.n8n === 'connected' ? 'n8n Live' : $serviceStatus.n8n === 'connecting' ? 'n8n Connecting...' : $serviceStatus.n8n === 'unknown' ? 'n8n Unknown' : 'n8n Offline'}
     </div>
 
-    <!-- AI Live Indicator (NO FUNCTIONALITY YET) -->
+    <!-- AI Live Indicator -->
     <div class="mt-2 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
-      {wsStatus === 'connected' ? 'bg-orange-500/20 text-orange-400' : 
-      wsStatus === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
+      {$serviceStatus.ai === 'connected' ? 'bg-orange-500/20 text-orange-400' : 
+      $serviceStatus.ai === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
       'bg-red-500/20 text-red-400'}">
       <span class="w-2 h-2 rounded-full 
-        {wsStatus === 'connected' ? 'bg-orange-500' : 
-        wsStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
+        {$serviceStatus.ai === 'connected' ? 'bg-orange-500' : 
+        $serviceStatus.ai === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
         'bg-red-500'}"></span>
-      {wsStatus === 'connected' ? 'AI Live' : wsStatus === 'AI connecting' ? 'AI Connecting...' : 'AI Offline'}
+      {$serviceStatus.ai === 'connected' ? 'AI Live' : $serviceStatus.ai === 'connecting' ? 'AI Connecting...' : 'AI Offline'}
     </div>
   </div>
   
