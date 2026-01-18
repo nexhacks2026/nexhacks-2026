@@ -282,6 +282,9 @@ async def release_ticket(
         from app.models import TicketStatus
         ticket.update_status(TicketStatus.TRIAGE_PENDING)
         target_queue = QueueType.INBOX
+        
+        # Clear old AI reasoning and response data for fresh re-triage
+        ticket.clear_ai_data()
     else:
         # Use the queue set by unassign() (typically ASSIGNMENT)
         target_queue = ticket.current_queue
