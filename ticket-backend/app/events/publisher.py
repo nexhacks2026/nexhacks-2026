@@ -169,12 +169,15 @@ class EventPublisher:
             channels=channels,
         )
 
-        # TODO: Send to external webhook (n8n) if configured
-        # This would be an HTTP POST to self._external_webhook_url
-        # For now, just log that we would send it
         if self._external_webhook_url:
-            # In production, use httpx or aiohttp to POST to the webhook
-            pass
+            try:
+                payload = {**data, "event": event_type}
+                
+                async with httpx.AsyncClient() as client:
+                    await client.post(self._external_webhook_url, json=payload, timeout=5.0)
+            except Exception as e:
+                # Log error but don't fail the operation
+                print(f"Failed to send webhook for {event_type}: {e}")
 
 
 # Global event publisher instance
