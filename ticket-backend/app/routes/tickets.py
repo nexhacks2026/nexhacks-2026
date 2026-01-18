@@ -1,10 +1,13 @@
 """Ticket API endpoints."""
 
+import logging
 from datetime import datetime, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 from app.models import (
     Ticket,
@@ -279,6 +282,10 @@ async def ingest_ticket(
     background_tasks.add_task(event_publisher.publish_ticket_created, ticket)
     # Don't publish triage_pending since we're keeping it in inbox
     # background_tasks.add_task(event_publisher.publish_ticket_triage_pending, ticket)
+
+    if any(tag in ["coding"] for tag in tags):
+        print("Coding Tag detected, calling the coding agent")
+        background_tasks.add_task(event_publisher.publish_coding_agent_trigger, ticket)
 
     return IngestResponse(
         ticket_id=ticket.id,
