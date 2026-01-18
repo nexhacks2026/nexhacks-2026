@@ -98,6 +98,17 @@
       {wsStatus === 'connected' ? 'n8n Live' : wsStatus === 'n8n connecting' ? 'n8n Connecting...' : 'n8n Offline'}
     </div>
 
+    <!-- AI Live Indicator (NO FUNCTIONALITY YET) -->
+    <div class="mt-2 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
+      {wsStatus === 'connected' ? 'bg-orange-500/20 text-orange-400' : 
+      wsStatus === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
+      'bg-red-500/20 text-red-400'}">
+      <span class="w-2 h-2 rounded-full 
+        {wsStatus === 'connected' ? 'bg-orange-500' : 
+        wsStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
+        'bg-red-500'}"></span>
+      {wsStatus === 'connected' ? 'AI Live' : wsStatus === 'AI connecting' ? 'AI Connecting...' : 'AI Offline'}
+    </div>
   </div>
   
   <main class="flex h-[calc(100vh-60px)]">
