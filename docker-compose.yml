@@ -52,6 +52,8 @@ services:
     restart: unless-stopped
 
   bot_webhook:
+    profiles:
+      - discord
     build:
       context: ./discord_bot_js
       dockerfile: Dockerfile
