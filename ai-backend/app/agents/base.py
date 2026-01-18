@@ -1,14 +1,15 @@
 import json
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
-from openrouter import OpenRouter
+from openai import OpenAI
 from app.config import Config
 
 class BaseAgent(ABC):
     def __init__(self, model: str):
         self.model = model
-        self.client = OpenRouter(
-            api_key=Config.OPENROUTER_API_KEY
+        self.client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=Config.OPENROUTER_API_KEY,
         )
 
     async def _call_llm(
