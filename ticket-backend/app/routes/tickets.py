@@ -512,7 +512,7 @@ async def update_ticket(
             
             # Move to RESOLUTION queue if not already there
             if ticket.current_queue != QueueType.RESOLUTION:
-                print(f"📦 Moving ticket from {ticket.current_queue.value} to RESOLUTION queue")
+                print(f"Moving ticket from {ticket.current_queue.value} to RESOLUTION queue")
                 old_queue = ticket.current_queue
                 queue_manager.move_ticket(
                     ticket_id=ticket_id,
@@ -557,11 +557,26 @@ async def update_ticket(
     # If ticket is being resolved, trigger the resolution webhook
     if is_being_resolved:
         print(f"📡 Triggering resolution webhook for ticket {ticket_id}")
+        
+        # Publish moved event if queue changed
+        if ticket.current_queue != QueueType.RESOLUTION: 
+
+             pass
+        
+
+        
         background_tasks.add_task(
             event_publisher.publish_ticket_resolved,
             ticket,
             "Ticket resolved manually by agent",
         )
+
+        background_tasks.add_task(
+            event_publisher.publish_ticket_updated,
+            ticket,
+            {"status": TicketStatus.RESOLVED.value, "queue": QueueType.RESOLUTION.value}
+        )
+        
     elif changes:
         background_tasks.add_task(
             event_publisher.publish_ticket_updated,
@@ -664,8 +679,18 @@ async def resolve_ticket(
         )
     
     ticket_repository.save(ticket)
+    
+    # Publish events
+    # 1. Ticket Moved (triggers frontend reload)
+    if ticket.current_queue != old_queue:
+        background_tasks.add_task(
+            event_publisher.publish_ticket_moved,
+            ticket,
+            from_queue=old_queue,
+            to_queue=ticket.current_queue,
+        )
 
-    # Publish resolution event (includes webhook to n8n)
+    # 2. Ticket Resolved (triggers n8n webhook)
     background_tasks.add_task(
         event_publisher.publish_ticket_resolved,
         ticket,
