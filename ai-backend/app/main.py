@@ -11,7 +11,29 @@ from app.agents.triage import triage_agent
 from app.agents.code import code_agent
 from app.agents.support import support_agent
 
+import logging
+import sys
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+logger = logging.getLogger("ai-backend")
+
 app = FastAPI(title="AI Agent Backend", version="1.0.0")
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("AI Backend Service Starting...")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info("AI Backend Service Shutting Down...")
 
 @app.get("/health")
 async def health_check():

@@ -3,11 +3,16 @@ from app.agents.base import BaseAgent
 from app.models import CodeAnalysisRequest, CodeAnalysisResult
 from app.config import Config
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class CodeAgent(BaseAgent):
     def __init__(self):
         super().__init__(model=Config.CODE_MODEL)
 
     async def analyze(self, request: CodeAnalysisRequest) -> CodeAnalysisResult:
+        logger.info(f"Analyzing code request for ticket: {request.ticket.ticket_id if hasattr(request.ticket, 'ticket_id') else 'new'}")
         ticket = request.ticket
         context = request.code_context
         

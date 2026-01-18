@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 from openai import OpenAI
 from app.config import Config
+import logging
+
+logger = logging.getLogger(__name__)
 
 class BaseAgent(ABC):
     def __init__(self, model: str):
@@ -46,6 +49,10 @@ class BaseAgent(ABC):
             # I will enforcing JSON in prompt and maybe use a grammar if supported.
             pass
 
+        logger.info(f"Calling LLM: model={self.model}, temperature={temperature}")
+        logger.debug(f"System Prompt: {system_prompt}")
+        logger.debug(f"User Content: {user_content}")
+
         try:
              # Sync call in async wrapper? Or does library support async? 
              # If the library is update, `client.chat.completions.create` might be it.
@@ -58,6 +65,8 @@ class BaseAgent(ABC):
                  temperature=temperature,
                  extra_body=extra_body
              )
+
+             logger.info("LLM Call Successful")
              
              content = completion.choices[0].message.content
              
@@ -73,7 +82,7 @@ class BaseAgent(ABC):
              return content
              
         except Exception as e:
-            print(f"LLM Call failed: {e}")
+            logger.error(f"LLM Call failed: {e}", exc_info=True)
             raise e
 
     @abstractmethod

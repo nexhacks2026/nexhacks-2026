@@ -2,11 +2,16 @@ from app.agents.base import BaseAgent
 from app.models import TicketData, TriageResult
 from app.config import Config
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class TriageAgent(BaseAgent):
     def __init__(self):
         super().__init__(model=Config.TRIAGE_MODEL)
 
     async def analyze(self, ticket: TicketData) -> TriageResult:
+        logger.info(f"Analyzing ticket for triage: {ticket.ticket_id if hasattr(ticket, 'ticket_id') else 'new'}")
         system_prompt = """
 You are a ticket triage classifier. Analyze the ticket and output JSON.
 

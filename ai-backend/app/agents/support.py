@@ -2,11 +2,16 @@ from app.agents.base import BaseAgent
 from app.models import SupportAnalysisRequest, SupportAnalysisResult
 from app.config import Config
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class SupportAgent(BaseAgent):
     def __init__(self):
         super().__init__(model=Config.SUPPORT_MODEL)
 
     async def analyze(self, request: SupportAnalysisRequest) -> SupportAnalysisResult:
+        logger.info(f"Analyzing support request for ticket: {request.ticket.ticket_id if hasattr(request.ticket, 'ticket_id') else 'new'}")
         ticket = request.ticket
         context = request.context
         
