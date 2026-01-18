@@ -62,44 +62,46 @@
     class="w-full flex items-center justify-between p-4 bg-gradient-to-r from-accent/10 to-primary/10 hover:from-accent/15 hover:to-primary/15 transition-colors"
   >
     <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-primary flex items-center justify-center">
-        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      </div>
+      
       <div class="text-left">
         <div class="flex items-center gap-2">
+
+          <!-- Lightning Icon -->
+          <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-accent to-primary flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+
+          <!-- Top Title -->
           <span class="text-sm font-medium text-foreground block">AI Reasoning</span>
+
+          <!-- The AUTO-RESOLVED Tag -->
           {#if reasoning.autoResolved}
             <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400 font-semibold uppercase tracking-wide">
               Auto-Resolved
             </span>
           {/if}
+
         </div>
+
+        <!-- The Purple Bar -->
+        <div class="mt-2 flex items-center gap-1.5">
+          <div class="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+            <div 
+              class="h-full bg-gradient-to-r from-accent to-primary rounded-full transition-all duration-500"
+              style="width: {reasoning.confidence * 100}%"
+            ></div>
+          </div>
+          <span class="text-xs text-muted-foreground">{Math.round(reasoning.confidence * 100)}%</span>
+        </div>
+
+        <!-- The Text Summary -->
         <span class="text-xs text-muted-foreground">{reasoning.summary}</span>
+
       </div>
     </div>
     
-    <div class="flex items-center gap-3">
-      <div class="flex items-center gap-1.5">
-        <div class="h-1.5 w-16 bg-muted rounded-full overflow-hidden">
-          <div 
-            class="h-full bg-gradient-to-r from-accent to-primary rounded-full transition-all duration-500"
-            style="width: {reasoning.confidence * 100}%"
-          ></div>
-        </div>
-        <span class="text-xs text-muted-foreground">{Math.round(reasoning.confidence * 100)}%</span>
-      </div>
-      
-      <svg 
-        class="w-5 h-5 text-muted-foreground transition-transform duration-200 {isExpanded ? 'rotate-180' : ''}"
-        fill="none" 
-        stroke="currentColor" 
-        viewBox="0 0 24 24"
-      >
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-      </svg>
-    </div>
   </button>
   
   {#if isExpanded}

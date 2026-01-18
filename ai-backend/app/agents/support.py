@@ -59,8 +59,8 @@ Output schema (JSON):
 """
 
         user_content = f"""
-Ticket Subject: {ticket.content.subject or ticket.content.issue_title or 'No subject'}
-Ticket Body: {ticket.content.body or ticket.content.message_text or 'No body'}
+Ticket Subject: {ticket.title or ticket.content.subject or ticket.content.issue_title or 'No subject'}
+Ticket Body: {ticket.description or ticket.content.body or ticket.content.message_text or 'No body'}
 
 Available Documentation Files: {', '.join(available_docs) if available_docs else 'None'}
 

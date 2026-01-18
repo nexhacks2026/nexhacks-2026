@@ -94,9 +94,9 @@ Output schema:
         user_content = f"""
 Ticket Source: {ticket.source}
 Content: {ticket.content.subject} / {ticket.content.body}
-Title: {ticket.content.issue_title}
+Title: {ticket.title or ticket.content.issue_title or 'N/A'}
 Message: {ticket.content.message_text}
-Description: {ticket.description if hasattr(ticket, 'description') else 'N/A'}
+Description: {ticket.description if ticket.description else 'N/A'}
 
 Available Agents:
 {agents_context}

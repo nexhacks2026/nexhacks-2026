@@ -320,13 +320,17 @@ async def release_ticket(
         target_queue,
     )
     
-    # If re-triaging, publish unassigned event
+    # If re-triaging, publish unassigned event AND triage_pending event
     if request.retriage:
         background_tasks.add_task(
             event_publisher.publish_ticket_assigned,
             ticket,
             None,  # No new assignee
             old_assignee,
+        )
+        background_tasks.add_task(
+            event_publisher.publish_ticket_triage_pending,
+            ticket,
         )
 
     return AssignmentResponse(

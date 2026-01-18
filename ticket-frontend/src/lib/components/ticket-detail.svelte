@@ -49,11 +49,16 @@
   // Check if status changes should be disabled (for triage tickets)
   let isStatusLocked = $derived(ticket.status === 'triage_pending' || ticket.status === 'triaging');
   
+  // Check if coding agent is working on this ticket
+  let isCodingAgentWorking = $derived(
+    ticket.assignee?.id === 'coding-agent' && ticket.status === 'assigned'
+  );
+  
   // Only admin can delete tickets
   let canDelete = $derived($currentUser?.id === 'user-0');
   
-  // When ticket is in triage, admin can only delete (all other actions disabled)
-  let canEdit = $derived(!isStatusLocked);
+  // When ticket is in triage or coding agent is working, admin can only delete (all other actions disabled)
+  let canEdit = $derived(!isStatusLocked && !isCodingAgentWorking);
   
   const priorityStyles: Record<TicketPriority, string> = {
     critical: 'bg-destructive text-white',
@@ -165,9 +170,10 @@
   }
   
   async function handleSaveDescription(): Promise<void> {
-    if (editedDescription.trim() && editedDescription !== ticket.description) {
+    const newDescription = editedDescription.trim();
+    if (newDescription !== ticket.description) {
       try {
-        await updateTicketDescription(ticket.id, editedDescription.trim());
+        await updateTicketDescription(ticket.id, newDescription);
         // Don't mutate ticket directly - the store will reload tickets
       } catch (error) {
         console.error('Failed to save description:', error);
@@ -302,6 +308,17 @@
               {/each}
             </div>
           </div>
+        {:else if isCodingAgentWorking}
+          <!-- Show locked status for coding agent tickets -->
+          <div class="flex items-center justify-between py-3 border-b border-border/50">
+            <span class="text-sm text-muted-foreground">Status</span>
+            <div class="text-xs px-2.5 py-1 rounded-md bg-purple-500/20 text-purple-500 flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Coding Agent (Locked)
+            </div>
+          </div>
         {:else}
           <!-- Show locked status for triage tickets -->
           <div class="flex items-center justify-between py-3 border-b border-border/50">
@@ -319,33 +336,35 @@
         <div class="flex flex-col py-3 border-b border-border/50">
           <span class="text-sm text-muted-foreground mb-2">Description</span>
           {#if isEditingDescription}
-          <div class="flex items-center gap-2 mb-2">
-            <input
-              type="text"
+          <div class="flex flex-col gap-2 mb-2">
+            <textarea
               bind:value={editedDescription}
-              class="flex-1 text-lg font-semibold bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
+              class="w-full text-sm text-foreground leading-relaxed bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary resize-none min-h-[80px]"
+              rows="4"
               autofocus
-            />
-            <button
-              type="button"
-              onclick={handleSaveDescription}
-              class="p-1.5 rounded hover:bg-muted text-primary"
-              aria-label="Save"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onclick={handleCancelEditDescription}
-              class="p-1.5 rounded hover:bg-muted text-muted-foreground"
-              aria-label="Cancel"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            ></textarea>
+            <div class="flex justify-end gap-2">
+              <button
+                type="button"
+                onclick={handleCancelEditDescription}
+                class="p-1.5 rounded hover:bg-muted text-muted-foreground"
+                aria-label="Cancel"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onclick={handleSaveDescription}
+                class="p-1.5 rounded hover:bg-muted text-primary"
+                aria-label="Save"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+            </div>
           </div>
           {:else}
             <div class="flex items-start justify-between gap-2 mb-2">

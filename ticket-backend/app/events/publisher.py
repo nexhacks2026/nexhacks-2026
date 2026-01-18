@@ -13,6 +13,7 @@ import os
 
 load_dotenv()
 webhook_url = os.getenv("N8N_AI_WEBHOOK_URL")
+print(f"N8N AI Webhook URL: {webhook_url}")
 
 
 class EventPublisher:
@@ -33,8 +34,15 @@ class EventPublisher:
                 "ticket_id": ticket.id,
                 "source": ticket.source.value,
                 "queue": ticket.current_queue.value,
-                "priority": ticket.priority.value,
                 "sender": ticket.content.sender,
+                "title": ticket.title,
+                "description": ticket.description,
+                "content": {
+                    "subject": ticket.title,
+                    "body": ticket.description,
+                    "message_text": getattr(ticket.content, "message_text", None),
+                    "issue_title": getattr(ticket.content, "issue_title", None),
+                },
             },
             ticket=ticket,
         )
@@ -124,7 +132,7 @@ class EventPublisher:
         # Prepare content for AI analysis (TicketData schema)
         content_data = {
             "subject": ticket.title,
-            "body": ticket.content.extract_body(),
+            "body": ticket.description,
             "message_text": getattr(ticket.content, "message_text", None),
             "issue_title": getattr(ticket.content, "issue_title", None),
         }
@@ -176,7 +184,10 @@ class EventPublisher:
         }
         try:
             async with httpx.AsyncClient() as client:
+                print(f"Triggering coding agent webhook: {payload}")
+                print(f"Coding agent webhook URL: {webhook_url}")
                 response = await client.post(webhook_url, json=payload, timeout=10.0)
+                print(f"Coding agent webhook response: {response}")
                 response.raise_for_status()
         except Exception as e:
             # Log error but don't fail the ticket creation

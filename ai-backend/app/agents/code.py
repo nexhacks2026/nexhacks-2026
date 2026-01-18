@@ -61,8 +61,8 @@ Output schema (JSON):
 """
 
         user_content = f"""
-Ticket: {ticket.content.issue_title or ticket.content.subject}
-Description: {ticket.content.body or ticket.content.message_text}
+Ticket: {ticket.title or ticket.content.issue_title or ticket.content.subject}
+Description: {ticket.description or ticket.content.body or ticket.content.message_text}
 Error Snippet: {context.error_snippet if context else 'None'}
 
 Related Files:

@@ -16,6 +16,8 @@ class TicketData(BaseModel):
     id: str
     content: TicketContent
     source: str
+    title: Optional[str] = None
+    description: Optional[str] = None
     priority: Optional[str] = "MEDIUM"
     tags: List[str] = []
     # List of available agents with their skills/load

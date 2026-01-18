@@ -144,7 +144,7 @@ class Ticket(BaseTicket):
     @property
     def title(self) -> str:
         """Get ticket title, falling back to content-based title if not set."""
-        if self._title:
+        if self._title is not None:
             return self._title
         # Fallback to extracting from content
         content_dict = self._content.to_dict()
@@ -159,7 +159,7 @@ class Ticket(BaseTicket):
     @property
     def description(self) -> str:
         """Get ticket description, falling back to content-based description if not set."""
-        if self._description:
+        if self._description is not None:
             return self._description
         # Fallback to extracting from content
         content_dict = self._content.to_dict()
