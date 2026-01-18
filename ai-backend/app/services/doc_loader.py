@@ -58,7 +58,7 @@ class DocLoader:
                     try:
                         response = self.client.compress_input(
                             input=content,
-                            aggressiveness=0.5
+                            aggressiveness=0.8
                         )
                         self.compressed_docs[doc_name] = response.output
                         logger.info(
