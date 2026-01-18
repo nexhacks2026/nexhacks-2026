@@ -4,6 +4,8 @@
   import { users, currentUser } from '$lib/stores/users.ts';
   import AiReasoningPanel from './ai-reasoning-panel.svelte';
   import UnassignModal from './unassign-modal.svelte';
+  import ImagePreview from './image-preview.svelte';
+  import { extractImageUrls } from '$lib/utils/imageDetection';
   
   interface Props {
     ticket: Ticket;
@@ -20,6 +22,13 @@
   
   let showUnassignModal = $state(false);
   let pendingUnassignUser = $state<string | null>(null);
+  
+  // Extract image URLs from ticket description and title
+  let imageUrls = $derived(() => {
+    const titleImages = extractImageUrls(ticket.title || '');
+    const descImages = extractImageUrls(ticket.description || '');
+    return [...titleImages, ...descImages];
+  });
 
   $effect(() => {
     editedTitle = ticket.title;
@@ -388,6 +397,11 @@
                 </button>
               {/if}
             </div>
+            
+            <!-- Image Preview Section -->
+            {#if imageUrls().length > 0}
+              <ImagePreview urls={imageUrls()} maxHeight={300} />
+            {/if}
           {/if}
           
         </div>
