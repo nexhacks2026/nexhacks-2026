@@ -201,17 +201,19 @@ class Ticket(BaseTicket):
     def assign(self, assignee: str) -> None:
         """Assign ticket to a user."""
         self._assignee = assignee
-        if self._status == TicketStatus.ASSIGNED:
-            self._status = TicketStatus.IN_PROGRESS
-            self._current_queue = QueueType.ACTIVE
+        # Move from INBOX/TRIAGE_PENDING to ASSIGNED when first assigned
+        if self._status in (TicketStatus.INBOX, TicketStatus.TRIAGE_PENDING):
+            self._status = TicketStatus.ASSIGNED
+            self._current_queue = QueueType.ASSIGNMENT
+        # Keep current status when reassigning (e.g., ASSIGNED stays ASSIGNED, IN_PROGRESS stays IN_PROGRESS)
         self._touch()
 
     def unassign(self) -> None:
         """Remove assignment from ticket."""
         self._assignee = None
-        if self._status == TicketStatus.IN_PROGRESS:
-            self._status = TicketStatus.ASSIGNED
-            self._current_queue = QueueType.ASSIGNMENT
+        # Always move back to INBOX when unassigned (regardless of current status)
+        self._status = TicketStatus.INBOX
+        self._current_queue = QueueType.INBOX
         self._touch()
 
     def update_priority(self, priority: TicketPriority) -> None:

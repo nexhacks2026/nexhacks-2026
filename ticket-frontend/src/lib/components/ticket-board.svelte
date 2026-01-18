@@ -1,6 +1,7 @@
 <script lang="ts">
   import TicketCard from './ticket-card.svelte';
   import { tickets, updateTicketStatus, type Ticket, type TicketStatus } from '$lib/stores/tickets';
+  import { currentUser } from '$lib/stores/users';
   
   interface Props {
     onselectTicket?: (event: { id: string }) => void;
@@ -15,12 +16,19 @@
     color: string;
   }
   
-  const columns: Column[] = [
+  const allColumns: Column[] = [
     { id: 'inbox', label: 'Inbox', color: 'bg-gray-500' },
     { id: 'assigned', label: 'Assigned', color: 'bg-blue-500' },
     { id: 'in_progress', label: 'In Progress', color: 'bg-purple-500' },
     { id: 'resolved', label: 'Resolved', color: 'bg-green-500' }
   ];
+  
+  // Filter columns based on user role
+  let columns = $derived(
+    $currentUser?.id === 'user-0' 
+      ? allColumns 
+      : allColumns.filter(col => col.id !== 'inbox')
+  );
   
   let draggedTicket: Ticket | null = $state(null);
   let dragOverColumn: TicketStatus | null = $state(null);

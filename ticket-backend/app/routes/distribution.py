@@ -193,24 +193,18 @@ async def assign_ticket(
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
-    if ticket.assignee and ticket.assignee != request.agent_id:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Ticket is already assigned to {ticket.assignee}",
-        )
-
     old_assignee = ticket.assignee
     old_queue = ticket.current_queue
 
-    # Assign and move to active
+    # Assign ticket (this will set status to ASSIGNED and queue to ASSIGNMENT)
     ticket.assign(request.agent_id)
 
-    if ticket.current_queue == QueueType.ASSIGNMENT:
-        ticket.move_to_queue(QueueType.ACTIVE)
+    # Update queue manager
+    if old_queue != ticket.current_queue:
         queue_manager.move_ticket(
             ticket_id=request.ticket_id,
-            from_queue=QueueType.ASSIGNMENT,
-            to_queue=QueueType.ACTIVE,
+            from_queue=old_queue,
+            to_queue=ticket.current_queue,
             ticket=ticket,
             reason=request.reason or f"assigned to {request.agent_id}",
             actor=request.agent_id,
@@ -265,15 +259,14 @@ async def release_ticket(
 
     old_queue = ticket.current_queue
 
-    # Unassign and move back to assignment queue
+    # Unassign (this will set status and queue appropriately)
     ticket.unassign()
-    ticket.move_to_queue(QueueType.ASSIGNMENT)
 
     if old_queue == QueueType.ACTIVE:
         queue_manager.move_ticket(
             ticket_id=request.ticket_id,
             from_queue=QueueType.ACTIVE,
-            to_queue=QueueType.ASSIGNMENT,
+            to_queue=ticket.current_queue,  # Use the queue set by unassign()
             ticket=ticket,
             reason=request.reason or "released by agent",
             actor=request.agent_id,
@@ -281,7 +274,7 @@ async def release_ticket(
     else:
         queue_manager.enqueue(
             ticket=ticket,
-            queue=QueueType.ASSIGNMENT,
+            queue=ticket.current_queue,  # Use the queue set by unassign()
             reason=request.reason or "released by agent",
             actor=request.agent_id,
         )

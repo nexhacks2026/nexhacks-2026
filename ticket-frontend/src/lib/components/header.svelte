@@ -37,7 +37,7 @@
   
   let stats = $derived.by(() => ({
     total: $tickets.length,
-    inbox: $tickets.filter(t => t.status === 'inbox').length,
+    inbox: $tickets.filter(t => t.status === 'inbox' || t.status === 'triage_pending').length,
     assigned: $tickets.filter(t => t.status === 'assigned').length,
     inProgress: $tickets.filter(t => t.status === 'in_progress').length,
     critical: $tickets.filter(t => t.priority === 'critical').length

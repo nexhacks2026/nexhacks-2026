@@ -58,7 +58,7 @@ class AutoResolveAction(str, Enum):
 
 # Valid state transitions for tickets
 VALID_TRANSITIONS: dict[TicketStatus, list[TicketStatus]] = {
-    TicketStatus.INBOX: [TicketStatus.TRIAGE_PENDING],
+    TicketStatus.INBOX: [TicketStatus.TRIAGE_PENDING, TicketStatus.ASSIGNED],
     TicketStatus.TRIAGE_PENDING: [TicketStatus.ASSIGNED, TicketStatus.RESOLVED],
     TicketStatus.ASSIGNED: [TicketStatus.IN_PROGRESS, TicketStatus.RESOLVED, TicketStatus.INBOX],
     TicketStatus.IN_PROGRESS: [TicketStatus.RESOLVED, TicketStatus.ASSIGNED, TicketStatus.INBOX],
