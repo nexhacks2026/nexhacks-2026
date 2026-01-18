@@ -7,7 +7,7 @@ TARGET:
 - Frontend URL: https://customer-portal.example.com
 
 PRELOADED COMMANDS:
-- curl
+- curl  
 - grep
 
 STEP 1: VERIFY STALE CONTENT

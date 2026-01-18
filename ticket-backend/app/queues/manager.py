@@ -172,24 +172,32 @@ class QueueManager:
         # Determine queue move based on confidence and auto-resolve capability
         conf = result.get("confidence", 0)
         can_auto_resolve = result.get("can_auto_resolve", False)
+        suggested_assignee = result.get("suggested_assignee")
 
-        # Check for auto-resolution first (high confidence + docs can answer)
-        if conf >= 0.8 and can_auto_resolve:
-            try:
-                import asyncio
-                from app.services.ai_client import ai_client
-                from app.events import event_publisher
+        # Always generate an AI response using the support agent
+        try:
+            import asyncio
+            from app.services.ai_client import ai_client
+            from app.events import event_publisher
 
-                async def auto_resolve_task():
-                    print(f"[AUTO-RESOLVE] Attempting auto-resolution for ticket {ticket.id}")
-                    support_result = await ai_client.analyze_support(ticket)
+            async def generate_ai_response_and_route():
+                print(f"[AI-RESPONSE] Generating AI response for ticket {ticket.id}")
+                support_result = await ai_client.analyze_support(ticket)
+                
+                # Always add AI response if we got one
+                if support_result:
+                    response_text = support_result.get("response_text", "")
+                    source_docs = support_result.get("source_docs", [])
+                    support_confidence = support_result.get("confidence", 0)
                     
-                    if support_result and support_result.get("confidence", 0) >= 0.7:
-                        # Auto-resolve the ticket
-                        response_text = support_result.get("response_text", "")
-                        source_docs = support_result.get("source_docs", [])
-                        
+                    if response_text:
                         ticket.add_ai_response(response_text, source_docs)
+                        print(f"[AI-RESPONSE] Added AI response for ticket {ticket.id}, confidence: {support_confidence}")
+                
+                # Now route based on auto-resolve status
+                if conf >= 0.8 and can_auto_resolve and not suggested_assignee:
+                    # Auto-resolve: no human needed, docs can fully answer
+                    if support_result and support_result.get("confidence", 0) >= 0.7:
                         ticket.update_status(TicketStatus.RESOLVED)
                         
                         self.move_ticket(
@@ -200,7 +208,7 @@ class QueueManager:
                             reason=f"AI Auto-Resolved from docs: {', '.join(source_docs) if source_docs else 'unknown'}",
                         )
                         
-                        # Broadcast websocket event for auto-resolution
+                        # Broadcast websocket events
                         await event_publisher.publish_ticket_moved(
                             ticket, QueueType.INBOX, QueueType.RESOLUTION
                         )
@@ -209,46 +217,48 @@ class QueueManager:
                         )
                         
                         print(f"[AUTO-RESOLVE] Ticket {ticket.id} auto-resolved using: {source_docs}")
+                        return
                     else:
-                        # Fallback to human assignment
-                        print(f"[AUTO-RESOLVE] Support agent confidence too low, falling back to assignment")
-                        await self._assign_to_human_async(ticket, result, conf)
+                        print(f"[AI-RESPONSE] Support confidence too low ({support_result.get('confidence', 0) if support_result else 0}), falling back to assignment")
+                
+                # Assigned to human (or low confidence)
+                if conf >= 0.8:
+                    await self._assign_to_human_async(ticket, result, conf)
+                else:
+                    # Low confidence -> Manual triage
+                    self.move_ticket(
+                        ticket.id,
+                        QueueType.INBOX,
+                        QueueType.TRIAGE,
+                        ticket,
+                        reason=f"AI Triage Needed (Confidence: {conf})",
+                    )
+                    await event_publisher.publish_ticket_moved(
+                        ticket, QueueType.INBOX, QueueType.TRIAGE
+                    )
 
-                # Get or create event loop to run background task
-                try:
-                    loop = asyncio.get_running_loop()
-                except RuntimeError:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-
-                loop.create_task(auto_resolve_task())
-            except Exception as e:
-                print(f"[AUTO-RESOLVE] Failed: {e}, falling back to assignment")
-                self._assign_to_human(ticket, result, conf)
-            return
-
-        # Standard flow: >= 0.8 confidence -> Auto-assign
-        if conf >= 0.8:
-            self._assign_to_human(ticket, result, conf)
-        else:
-            # < 0.8: Low confidence -> Manual Triage (move to TRIAGE)
-            self.move_ticket(
-                ticket.id,
-                QueueType.INBOX,
-                QueueType.TRIAGE,
-                ticket,
-                reason=f"AI Triage Needed (Confidence: {conf})",
-            )
-            # Broadcast websocket event
-            import asyncio
-            from app.events import event_publisher
+            # Get or create event loop to run background task
             try:
                 loop = asyncio.get_running_loop()
-                loop.create_task(event_publisher.publish_ticket_moved(
-                    ticket, QueueType.INBOX, QueueType.TRIAGE
-                ))
             except RuntimeError:
-                pass  # No event loop available
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            loop.create_task(generate_ai_response_and_route())
+        except Exception as e:
+            print(f"[AI-RESPONSE] Failed: {e}, falling back to sync assignment")
+            # Fallback to sync assignment without AI response
+            if conf >= 0.8:
+                self._assign_to_human(ticket, result, conf)
+            else:
+                self.move_ticket(
+                    ticket.id,
+                    QueueType.INBOX,
+                    QueueType.TRIAGE,
+                    ticket,
+                    reason=f"AI Triage Needed (Confidence: {conf})",
+                )
+
 
     def _assign_to_human(self, ticket: Ticket, result: dict, conf: float) -> None:
         """Helper to assign ticket to a human agent (sync version)."""

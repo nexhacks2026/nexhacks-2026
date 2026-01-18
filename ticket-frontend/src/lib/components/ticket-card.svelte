@@ -18,6 +18,9 @@
     low: 'bg-muted text-muted-foreground border-border'
   };
   
+  // Check if assigned to coding_agent
+  let isCodingAgent = $derived(ticket.assignee?.id === 'coding_agent' || ticket.suggestedAssignee === 'coding_agent');
+  
   function formatTimeAgo(dateString: string): string {
     const date = new Date(dateString);
     const now = new Date();
@@ -42,6 +45,9 @@
   {#if !isDraggable}
     <div class="absolute inset-0 triage-gradient pointer-events-none"></div>
   {/if}
+  {#if isCodingAgent}
+    <div class="absolute inset-0 coding-gradient pointer-events-none"></div>
+  {/if}
   <div class="flex items-start justify-between gap-2 mb-2 relative z-10">
     <h4 class="font-medium text-foreground text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors relative z-10">
     {ticket.title}
@@ -62,6 +68,12 @@
           title={ticket.assignee.name}
         >
           {ticket.assignee.avatar}
+        </div>
+      {:else if isCodingAgent}
+        <div class="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center" title="Coding Agent">
+          <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
         </div>
       {:else}
         <div class="w-6 h-6 rounded-full bg-muted border border-dashed border-muted-foreground flex items-center justify-center">
@@ -131,4 +143,19 @@
     border: 2px solid rgba(234, 179, 8, 0.6);
     border-radius: 0.5rem;
   }
+
+  .coding-gradient {
+    background: linear-gradient(
+      135deg,
+      rgba(147, 51, 234, 0.25),
+      rgba(168, 85, 247, 0.4),
+      rgba(147, 51, 234, 0.25),
+      rgba(126, 34, 206, 0.5)
+    );
+    background-size: 200% 200%;
+    animation: triageMove 3s ease-in-out infinite;
+    border: 2px solid rgba(147, 51, 234, 0.5);
+    border-radius: 0.5rem;
+  }
 </style>
+

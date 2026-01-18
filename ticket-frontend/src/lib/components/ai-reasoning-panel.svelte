@@ -105,19 +105,25 @@
   {#if isExpanded}
     <div class="p-4 space-y-3 bg-card" transition:slide={{ duration: 200 }}>
       
-      <!-- Auto-Resolved Response Section -->
-      {#if reasoning.autoResolved && reasoning.autoResponse}
-        <div class="rounded-lg border border-green-500/30 bg-green-500/5 p-4 mb-4">
+      <!-- AI Response Section (always show when response exists) -->
+      {#if reasoning.autoResponse}
+        <div class="rounded-lg border {reasoning.autoResolved ? 'border-green-500/30 bg-green-500/5' : 'border-blue-500/30 bg-blue-500/5'} p-4 mb-4">
           <div class="flex items-center gap-2 mb-2">
-            <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg class="w-4 h-4 {reasoning.autoResolved ? 'text-green-400' : 'text-blue-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {#if reasoning.autoResolved}
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              {:else}
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              {/if}
             </svg>
-            <span class="text-xs font-semibold text-green-400 uppercase tracking-wide">AI Response</span>
+            <span class="text-xs font-semibold {reasoning.autoResolved ? 'text-green-400' : 'text-blue-400'} uppercase tracking-wide">
+              {reasoning.autoResolved ? 'AI Auto-Resolved' : 'AI Suggested Response'}
+            </span>
           </div>
           <p class="text-sm text-foreground leading-relaxed">{reasoning.autoResponse}</p>
           
           {#if reasoning.sourceDocs && reasoning.sourceDocs.length > 0}
-            <div class="mt-3 pt-3 border-t border-green-500/20">
+            <div class="mt-3 pt-3 border-t {reasoning.autoResolved ? 'border-green-500/20' : 'border-blue-500/20'}">
               <span class="text-[10px] text-muted-foreground uppercase tracking-wide">Source Docs:</span>
               <div class="flex flex-wrap gap-1 mt-1">
                 {#each reasoning.sourceDocs as doc}

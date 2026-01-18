@@ -29,20 +29,27 @@ Rules:
 - MEDIUM is for: minor bugs, non-urgent requests, questions
 - LOW is for: documentation, enhancement ideas, off-topic
 
-Auto-Resolution Detection:
-- Set `can_auto_resolve` to true if the ticket can be answered directly from
-  the provided reference documentation, even if it requires human intervention.
-- Examples of auto-resolvable: FAQ questions, how-to guides, documented procedures,
-  general questions about features that are covered in the docs.
-- If `can_auto_resolve` is true, provide `auto_resolve_reasoning` explaining which
-  part of the documentation can address this ticket.
+Auto-Resolution Rules:
+- Set `can_auto_resolve` to TRUE ONLY when:
+  1. The ticket can be FULLY answered from the provided documentation
+  2. AND no human action is required (no account changes, no investigation, no judgment calls)
+  3. AND you are NOT assigning to a human agent
+- Set `can_auto_resolve` to FALSE when:
+  1. You are assigning to a human (suggested_assignee is set)
+  2. OR it requires human judgment, account-specific investigation, or actions
+  3. OR it's a bug report, feature request, or billing dispute
+- If `can_auto_resolve` is true, provide `auto_resolve_reasoning`.
+- IMPORTANT: can_auto_resolve and suggested_assignee are mutually exclusive!
 
-Assignee Selection (only if can_auto_resolve is false):
-- Select the best `suggested_assignee` (user ID) from the provided list of available agents.
+Assignee Selection:
+- If ticket needs human help, you MUST assign someone (suggested_assignee).
+- SPECIAL RULE: If the ticket is about code, programming, debugging, API errors, 
+  build failures, or technical implementation, assign to "coding_agent".
 - Match ticket content to agent `skills`.
 - Avoid agents with status "offline" unless no one else is available.
 - Prefer agents with lower `current_load` if skills are a match.
-- If no good match found, leave `suggested_assignee` null.
+- If assigned to human or coding_agent, set can_auto_resolve to false.
+- Only leave suggested_assignee null if can_auto_resolve is true.
 
 Output schema:
 {
