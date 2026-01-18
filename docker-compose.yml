@@ -18,12 +18,25 @@ services:
       - "8000"
     environment:
       - PYTHONUNBUFFERED=1
+      - N8N_AI_WEBHOOK_URL=${N8N_AI_WEBHOOK_URL}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: ./ai-backend
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - ./ai-backend/.env
     restart: unless-stopped
 
   frontend:
@@ -48,3 +61,5 @@ services:
       - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
       - DISCORD_TOKEN=${DISCORD_TOKEN}
     restart: unless-stopped
+
+

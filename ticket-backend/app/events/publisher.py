@@ -3,9 +3,16 @@
 from datetime import datetime, timezone
 from typing import Any, Optional
 import asyncio
+import httpx
 
 from app.models import Ticket, QueueType
 from app.websockets import connection_manager
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()                   
+webhook_url = os.getenv("N8N_AI_WEBHOOK_URL")
 
 
 class EventPublisher:
@@ -106,6 +113,27 @@ class EventPublisher:
             },
             channels=["all", f"queue.{queue.value}"],
         )
+        
+
+    async def publish_coding_agent_trigger(self, ticket: Ticket) -> None:
+        """Trigger n8n webhook for coding agent when a ticket has coding tags """
+        payload = {
+            "ticket_id": ticket.id,
+            "tags": ticket.tags,
+            "priority": ticket.priority.value,
+            "source": ticket.source.value,
+            "content": {
+                "body": ticket.content.extract_body(),
+                "sender": ticket.content.sender,
+            }
+        }
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(webhook_url, json=payload, timeout=10.0)
+                response.raise_for_status()
+        except Exception as e:
+            # Log error but don't fail the ticket creation
+            print(f"Failed to trigger coding agent webhook: {e}")
 
     async def _publish_event(
         self,
