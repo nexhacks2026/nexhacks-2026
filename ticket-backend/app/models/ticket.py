@@ -295,7 +295,7 @@ class Ticket(BaseTicket):
         """Clear all AI reasoning, response data, category, and priority (used when re-triaging)."""
         self._ai_reasoning = {}
         self._category = None
-        self._priority = None
+        self._priority = TicketPriority.MEDIUM
         self._suggested_assignee = None
         self._touch()
 
