@@ -31,11 +31,9 @@ Rules:
 
 Auto-Resolution Detection:
 - Set `can_auto_resolve` to true if the ticket can be answered directly from
-  the provided reference documentation without needing human intervention.
+  the provided reference documentation, even if it requires human intervention.
 - Examples of auto-resolvable: FAQ questions, how-to guides, documented procedures,
   general questions about features that are covered in the docs.
-- NOT auto-resolvable: complex issues, account-specific problems, bugs, feature requests,
-  billing disputes, anything requiring human judgment or action.
 - If `can_auto_resolve` is true, provide `auto_resolve_reasoning` explaining which
   part of the documentation can address this ticket.
 

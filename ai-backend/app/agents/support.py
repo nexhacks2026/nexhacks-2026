@@ -53,7 +53,8 @@ Output schema (JSON):
   "confidence": 0.0,
   "reasoning": "...",
   "response_text": "Your friendly response to the user...",
-  "source_docs": ["doc_name1", "doc_name2"]
+  "source_docs": ["doc_name1", "doc_name2"],
+  "commands_executed": ["command1", "command2"],
 }
 """
 
