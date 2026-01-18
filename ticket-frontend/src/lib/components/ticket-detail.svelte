@@ -353,6 +353,18 @@
           </div>
         {/if}
         
+        <!-- Category Section -->
+        <div class="flex items-center justify-between py-3 border-b border-border/50">
+          <span class="text-sm text-muted-foreground">Category</span>
+          {#if ticket.category}
+            <span class="text-sm px-2.5 py-1 rounded-md bg-accent/10 text-accent capitalize">
+              {ticket.category.toLowerCase().replace(/_/g, ' ')}
+            </span>
+          {:else}
+            <span class="text-sm text-muted-foreground italic">None</span>
+          {/if}
+        </div>
+        
         <!-- Created Section -->
         <div class="flex items-center justify-between py-3 border-b border-border/50">
           <span class="text-sm text-muted-foreground">Created</span>

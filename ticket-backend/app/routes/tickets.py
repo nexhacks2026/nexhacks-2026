@@ -237,11 +237,17 @@ async def ingest_ticket(
 
     # Extract priority hint from metadata if provided
     priority = TicketPriority.MEDIUM
+    category = None
     tags = []
     if request.metadata:
         if "priority" in request.metadata:
             try:
                 priority = TicketPriority(request.metadata["priority"])
+            except ValueError:
+                pass
+        if "category" in request.metadata:
+            try:
+                category = TicketCategory(request.metadata["category"])
             except ValueError:
                 pass
         if "tags" in request.metadata:
@@ -254,6 +260,10 @@ async def ingest_ticket(
         priority=priority,
         tags=tags,
     )
+    
+    # Set category if provided
+    if category:
+        ticket.set_category(category)
 
     # Set status to TRIAGE_PENDING for immediate feedback (shows in Inbox)
     ticket.update_status(TicketStatus.TRIAGE_PENDING)
