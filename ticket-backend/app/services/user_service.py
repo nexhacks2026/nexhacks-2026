@@ -64,6 +64,13 @@ class UserService:
                 skills=["cisco", "firewall", "vpn", "routing"],
                 current_load=0,
             ),
+            AgentContext(
+                id="coding-agent",
+                name="Coding Agent",
+                status="active",
+                skills=["geese", "python", "javascript", "react", "svelte", "css", "docker", "kubernetes", "aws", "ci/cd"],
+                current_load=3,
+            ),
         ]
 
     def get_available_agents(self) -> List[Dict[str, Any]]:
