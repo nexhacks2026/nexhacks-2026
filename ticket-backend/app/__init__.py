@@ -25,6 +25,13 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Start background tasks
+    @app.on_event("startup")
+    async def startup_event():
+        import asyncio
+        from app.tasks import run_auto_close_task
+        asyncio.create_task(run_auto_close_task())
+
     # Include routers
     app.include_router(tickets_router)
     app.include_router(queues_router)

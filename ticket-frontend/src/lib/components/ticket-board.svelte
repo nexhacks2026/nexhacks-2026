@@ -32,11 +32,15 @@
   
   let draggedTicket: Ticket | null = $state(null);
   let dragOverColumn: TicketStatus | null = $state(null);
+  let showClosed = $state(false);
   
   function getTicketsByStatus(status: TicketStatus): Ticket[] {
     // Show triage_pending tickets in inbox column
     if (status === 'inbox') {
       return $tickets.filter(t => t.status === 'inbox' || t.status === 'triage_pending');
+    }
+    if (status === 'resolved') {
+      return $tickets.filter(t => t.status === 'resolved' || (showClosed && t.status === 'closed'));
     }
     return $tickets.filter(t => t.status === status);
   }
@@ -91,6 +95,15 @@
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full {column.color}"></span>
               <h3 class="font-medium text-foreground">{column.label}</h3>
+              {#if column.id === 'resolved'}
+                <button 
+                  class="ml-2 text-xs px-2 py-0.5 rounded border transition-colors {showClosed ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground border-transparent hover:bg-muted'}"
+                  onclick={() => showClosed = !showClosed}
+                  title={showClosed ? "Hide closed tickets" : "Show closed tickets"}
+                >
+                  {showClosed ? 'Hide Closed' : 'Show Closed'}
+                </button>
+              {/if}
             </div>
             <span class="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
               {columnTickets.length}
