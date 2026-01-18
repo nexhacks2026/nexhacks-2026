@@ -121,15 +121,10 @@ class WebhookService:
             })
         elif ticket.source == TicketSource.DISCORD:
             source_data.update({
-                "channel_id": content.channel_id,
-                "user_id": content.user_id,
-                "message_id": content.message_id,
-                "guild_id": content.guild_id,
                 "username": content.sender,
             })
         elif ticket.source == TicketSource.GITHUB:
             source_data.update({
-                "repo": content.repo,
                 "issue_number": content.issue_number,
                 "author": content.sender,
                 "url": content.url,
