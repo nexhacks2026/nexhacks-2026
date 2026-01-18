@@ -131,7 +131,7 @@
       </button>
 
       <!-- Plus Button -->
-      <button onclick={() => showTicketModal = true} class="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" aria-label="Add ticket">
+      <button onclick={() => showTicketModal = true} class="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" aria-label="Add ticket">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
@@ -177,6 +177,7 @@
             </div>
             <div class="flex-1 text-left">
               <div class="font-medium text-foreground">{user.name}</div>
+              <div class="text-xs text-muted-foreground">{user.id}</div>
             </div>
             {#if $currentUser?.id === user.id}
               <svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
