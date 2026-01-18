@@ -40,8 +40,8 @@ class BaseAgent(ABC):
             pass
 
         logger.info(f"Calling LLM: model={self.model}, temperature={temperature}")
-        logger.debug(f"System Prompt: {system_prompt}")
-        logger.debug(f"User Content: {user_content}")
+        logger.info(f"System Prompt: {system_prompt}")
+        logger.info(f"User Content: {user_content}")
 
         try:
             # Sync call in async wrapper? Or does library support async?
