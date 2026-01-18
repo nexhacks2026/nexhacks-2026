@@ -81,46 +81,6 @@
   <!-- Connection status indicators -->
    <!-- Toast notifications -->
   <ToastContainer />
-  <div class="fixed bottom-4 right-4">
-
-    <!-- Database Live Indicator -->
-    <div class="z-50 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
-      {$serviceStatus.database === 'connected' ? 'bg-green-500/20 text-green-400' : 
-      $serviceStatus.database === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
-      'bg-red-500/20 text-red-400'}">
-      <span class="w-2 h-2 rounded-full 
-        {$serviceStatus.database === 'connected' ? 'bg-green-500' : 
-        $serviceStatus.database === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
-        'bg-red-500'}"></span>
-      {$serviceStatus.database === 'connected' ? 'DB Live' : $serviceStatus.database === 'connecting' ? 'DB Connecting...' : 'DB Offline'}
-    </div>
-
-    <!-- n8n live indicator (NO FUNCTIONALITY YET) -->
-    <div class="mt-2 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
-      {$serviceStatus.n8n === 'connected' ? 'bg-pink-500/20 text-pink-400' : 
-      $serviceStatus.n8n === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
-      $serviceStatus.n8n === 'unknown' ? 'bg-gray-500/20 text-gray-400' :
-      'bg-red-500/20 text-red-400'}">
-      <span class="w-2 h-2 rounded-full 
-        {$serviceStatus.n8n === 'connected' ? 'bg-pink-500' : 
-        $serviceStatus.n8n === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
-        $serviceStatus.n8n === 'unknown' ? 'bg-gray-500' :
-        'bg-red-500'}"></span>
-      {$serviceStatus.n8n === 'connected' ? 'n8n Live' : $serviceStatus.n8n === 'connecting' ? 'n8n Connecting...' : $serviceStatus.n8n === 'unknown' ? 'n8n Unknown' : 'n8n Offline'}
-    </div>
-
-    <!-- AI Live Indicator -->
-    <div class="mt-2 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
-      {$serviceStatus.ai === 'connected' ? 'bg-orange-500/20 text-orange-400' : 
-      $serviceStatus.ai === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
-      'bg-red-500/20 text-red-400'}">
-      <span class="w-2 h-2 rounded-full 
-        {$serviceStatus.ai === 'connected' ? 'bg-orange-500' : 
-        $serviceStatus.ai === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
-        'bg-red-500'}"></span>
-      {$serviceStatus.ai === 'connected' ? 'AI Live' : $serviceStatus.ai === 'connecting' ? 'AI Connecting...' : 'AI Offline'}
-    </div>
-  </div>
   
   <main class="flex h-[calc(100vh-60px)]">
     {#if $loading}
