@@ -10,6 +10,7 @@ from app.models import (
 from app.agents.triage import triage_agent
 from app.agents.code import code_agent
 from app.agents.support import support_agent
+from app.services.doc_loader import doc_loader
 
 import logging
 import sys
@@ -29,6 +30,8 @@ app = FastAPI(title="AI Agent Backend", version="1.0.0")
 @app.on_event("startup")
 async def startup_event():
     logger.info("AI Backend Service Starting...")
+    await doc_loader.load_and_compress_docs()
+    logger.info(f"Loaded {len(doc_loader.compressed_docs)} documentation files")
 
 
 @app.on_event("shutdown")

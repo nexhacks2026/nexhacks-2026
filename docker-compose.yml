@@ -29,13 +29,14 @@ services:
 
   ai-service:
     build:
-      context: ./ai-backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ai-backend/Dockerfile
     expose:
       - "8000"
     environment:
       - PYTHONUNBUFFERED=1
       - OPENROUTER_API_KEY=${OPENAI_API_KEY}
+      - TOKENC_API_KEY=${TOKENC_API_KEY}
     restart: unless-stopped
 
   frontend:

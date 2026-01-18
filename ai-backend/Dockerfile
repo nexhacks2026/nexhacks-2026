@@ -7,13 +7,16 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 WORKDIR /app
 
 # Copy dependency files first for caching
-COPY pyproject.toml uv.lock ./
+COPY ai-backend/pyproject.toml ai-backend/uv.lock ./
 
 # Install dependencies
 RUN uv sync --frozen --no-dev
 
 # Copy application code
-COPY . .
+COPY ai-backend/ .
+
+# Copy documentation
+COPY DOCS /app/DOCS
 
 # Expose port
 EXPOSE 8000

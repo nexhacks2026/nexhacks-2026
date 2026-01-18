@@ -1,6 +1,7 @@
 from app.agents.base import BaseAgent
 from app.models import TicketData, TriageResult
 from app.config import Config
+from app.services.doc_loader import doc_loader
 
 import logging
 
@@ -63,6 +64,9 @@ Output schema:
         logger.info(f"Available agents for triage: {ticket.available_agents}")
         logger.info(f"Formatted agents context: {agents_context}")
 
+        # Get compressed documentation context
+        docs_context = doc_loader.get_docs_context()
+
         user_content = f"""
 Ticket Source: {ticket.source}
 Content: {ticket.content.subject} / {ticket.content.body}
@@ -71,6 +75,9 @@ Message: {ticket.content.message_text}
 
 Available Agents:
 {agents_context}
+
+Reference Documentation (use these runbooks to inform your decisions):
+{docs_context}
 """
 
         result_json = await self._call_llm(

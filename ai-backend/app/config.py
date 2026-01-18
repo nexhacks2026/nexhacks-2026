@@ -13,3 +13,7 @@ class Config:
     SUPPORT_MODEL = os.getenv(
         "SUPPORT_MODEL", "google/gemini-3-flash-preview"
     )  # Using free/fast model for support too
+
+    # TokenCompany compression
+    TOKENC_API_KEY = os.getenv("TOKENC_API_KEY")
+    DOCS_PATH = os.getenv("DOCS_PATH", "/app/DOCS")
