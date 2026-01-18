@@ -71,16 +71,44 @@
 <div class="min-h-screen bg-background">
   <Header />
   
-  <!-- Connection status indicator -->
-  <div class="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
-    {wsStatus === 'connected' ? 'bg-green-500/20 text-green-400' : 
-     wsStatus === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
-     'bg-red-500/20 text-red-400'}">
-    <span class="w-2 h-2 rounded-full 
-      {wsStatus === 'connected' ? 'bg-green-500' : 
-       wsStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
-       'bg-red-500'}"></span>
-    {wsStatus === 'connected' ? 'Live' : wsStatus === 'connecting' ? 'Connecting...' : 'Offline'}
+  <!-- Connection status indicators -->
+  <div class="fixed bottom-4 right-4">
+
+    <!-- Database Live Indicator -->
+    <div class="z-50 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
+      {wsStatus === 'connected' ? 'bg-green-500/20 text-green-400' : 
+      wsStatus === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
+      'bg-red-500/20 text-red-400'}">
+      <span class="w-2 h-2 rounded-full 
+        {wsStatus === 'connected' ? 'bg-green-500' : 
+        wsStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
+        'bg-red-500'}"></span>
+      {wsStatus === 'connected' ? 'DB Live' : wsStatus === 'DB connecting' ? 'DB Connecting...' : 'DB Offline'}
+    </div>
+
+    <!-- n8n live indicator (NO FUNCTIONALITY YET) -->
+    <div class="mt-2 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
+      {wsStatus === 'connected' ? 'bg-pink-500/20 text-pink-400' : 
+      wsStatus === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
+      'bg-red-500/20 text-red-400'}">
+      <span class="w-2 h-2 rounded-full 
+        {wsStatus === 'connected' ? 'bg-pink-500' : 
+        wsStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
+        'bg-red-500'}"></span>
+      {wsStatus === 'connected' ? 'n8n Live' : wsStatus === 'n8n connecting' ? 'n8n Connecting...' : 'n8n Offline'}
+    </div>
+
+    <!-- AI Live Indicator (NO FUNCTIONALITY YET) -->
+    <div class="mt-2 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
+      {wsStatus === 'connected' ? 'bg-orange-500/20 text-orange-400' : 
+      wsStatus === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' : 
+      'bg-red-500/20 text-red-400'}">
+      <span class="w-2 h-2 rounded-full 
+        {wsStatus === 'connected' ? 'bg-orange-500' : 
+        wsStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
+        'bg-red-500'}"></span>
+      {wsStatus === 'connected' ? 'AI Live' : wsStatus === 'AI connecting' ? 'AI Connecting...' : 'AI Offline'}
+    </div>
   </div>
   
   <main class="flex h-[calc(100vh-60px)]">
