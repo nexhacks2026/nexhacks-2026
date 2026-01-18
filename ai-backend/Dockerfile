@@ -1,20 +1,21 @@
-FROM python:3.12-slim
+# Backend Dockerfile - Python with uv
+FROM python:3.14-slim
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# Install uv for fast package management
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
-
-# Copy dependency files
+# Copy dependency files first for caching
 COPY pyproject.toml uv.lock ./
 
 # Install dependencies
 RUN uv sync --frozen --no-dev
 
 # Copy application code
-COPY app/ ./app/
+COPY . .
 
-# Expose the port
+# Expose port
 EXPOSE 8000
 
 # Run the application
