@@ -177,7 +177,6 @@
             </div>
             <div class="flex-1 text-left">
               <div class="font-medium text-foreground">{user.name}</div>
-              <div class="text-xs text-muted-foreground">{user.id}</div>
             </div>
             {#if $currentUser?.id === user.id}
               <svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
