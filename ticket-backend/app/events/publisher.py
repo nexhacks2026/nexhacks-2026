@@ -92,6 +92,8 @@ class EventPublisher:
 
     async def publish_ticket_triage_pending(self, ticket: Ticket) -> None:
         """Publish ticket.triage_pending event - triggers n8n AI workflow."""
+        from app.services.user_service import user_service
+        
         await self._publish_event(
             event_type="ticket.triage_pending",
             data={
@@ -99,6 +101,7 @@ class EventPublisher:
                 "source": ticket.source.value,
                 "content_preview": ticket.content.extract_body()[:500],
                 "priority": ticket.priority.value,
+                "available_agents": user_service.get_available_agents(),
             },
             ticket=ticket,
         )

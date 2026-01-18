@@ -25,17 +25,6 @@ class BaseAgent(ABC):
         """
         Helper to call OpenRouter API.
         """
-        # Note: The OpenRouter Python SDK might differ slightly in async usage or method names. 
-        # Checking standard usage, often it wraps openai or has its own client.
-        # Assuming standard ChatCompletion style for now. 
-        # If the SDK is just a wrapper around requests, we might need to adjust.
-        # But for 'openrouter' pypi package, it usually provides a client.
-        
-        # Actually, the user installed 'openrouter', let's double check its usage if we run into issues.
-        # For now, I'll assume it's compatible or I'll use direct HTTP via httpx if the SDK is obscure.
-        # To be safe and robust, I'll use the OpenAI SDK pattern if OpenRouter supports it, 
-        # or just raw requests if I'm unsure about the installed package version.
-        # Given the user just did `uv add openrouter`, let's assume it's the official one.
         
         messages = [
             {"role": "system", "content": system_prompt},

@@ -25,6 +25,13 @@ Rules:
 - MEDIUM is for: minor bugs, non-urgent requests, questions
 - LOW is for: documentation, enhancement ideas, off-topic
 
+Assignee Selection:
+- Select the best `suggested_assignee` (user ID) from the provided list of available agents.
+- Match ticket content to agent `skills`.
+- Avoid agents with status "offline" unless no one else is available.
+- Prefer agents with lower `current_load` if skills are a match.
+- If no good match found, leave `suggested_assignee` null.
+
 Output schema:
 {
   "category": "...",
@@ -32,16 +39,33 @@ Output schema:
   "confidence": 0.0,
   "reasoning": "...",
   "suggested_assignee_team": "...",
+  "suggested_assignee": "user-ID-or-null",
   "tags": ["..."],
   "estimated_resolution_time_hours": 0
 }
 """
         
+        # Format available agents for the prompt
+        agents_context = "No agent data available."
+        if hasattr(ticket, 'available_agents') and ticket.available_agents:
+            agents_list = []
+            for agent in ticket.available_agents:
+                skills_str = ", ".join(agent.get('skills', []))
+                agents_list.append(
+                    f"- ID: {agent.get('id')} | Name: {agent.get('name')} | "
+                    f"Status: {agent.get('status')} | Load: {agent.get('current_load')} | "
+                    f"Skills: {skills_str}"
+                )
+            agents_context = "\n".join(agents_list)
+
         user_content = f"""
 Ticket Source: {ticket.source}
 Content: {ticket.content.subject} / {ticket.content.body}
 Title: {ticket.content.issue_title}
 Message: {ticket.content.message_text}
+
+Available Agents:
+{agents_context}
 """
         
         result_json = await self._call_llm(

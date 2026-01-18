@@ -15,6 +15,8 @@ class TicketData(BaseModel):
     source: str
     priority: Optional[str] = "MEDIUM"
     tags: List[str] = []
+    # List of available agents with their skills/load
+    available_agents: List[dict] = []
 
 # --- Triage Models ---
 class TriageResult(BaseModel):
@@ -23,6 +25,7 @@ class TriageResult(BaseModel):
     confidence: float
     reasoning: str
     suggested_assignee_team: Optional[str] = None
+    suggested_assignee: Optional[str] = None # ID of the suggested agent
     tags: List[str] = []
     estimated_resolution_time_hours: Optional[int] = None
 

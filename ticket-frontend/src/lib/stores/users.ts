@@ -11,7 +11,7 @@ export const users: User[] = [
   { id: "user-1", name: "IT Person" },
   { id: "user-2", name: "Frontend Developer" },
   { id: "user-3", name: "Backend Developer" },
-  { id: "user-4", name: "Databse Developer" },
+  { id: "user-4", name: "Database Developer" },
   { id: "user-5", name: "UI Designer" },
   { id: "user-6", name: "AI Engineer" },
   { id: "user-7", name: "Network Engineer" },
