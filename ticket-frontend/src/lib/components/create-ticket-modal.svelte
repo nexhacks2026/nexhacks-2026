@@ -129,7 +129,7 @@
           >
             <option value="">Unassigned (optional)</option>
             {#each users.filter(u => u.id !== 'user-0') as user}
-              <option value={user.name}>{user.name}</option>
+              <option value={user.id}>{user.name}</option>
             {/each}
           </select>
         </div>

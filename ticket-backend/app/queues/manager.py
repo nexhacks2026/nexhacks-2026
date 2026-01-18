@@ -160,16 +160,26 @@ class QueueManager:
                 pass
 
         # Set suggested assignee if provided
-        if result.get("suggested_assignee"):
-            ticket.set_suggested_assignee(result["suggested_assignee"])
+        suggested_assignee = result.get("suggested_assignee")
+        if suggested_assignee:
+            ticket.set_suggested_assignee(suggested_assignee)
+
+        # Add AI-suggested tags (merge with existing)
+        ai_tags = result.get("tags", [])
+        for tag in ai_tags:
+            ticket.add_tag(tag)
 
         # Determine queue move based on confidence
         conf = result.get("confidence", 0)
 
         # >= 0.8: High confidence -> Auto-assign (move to ASSIGNMENT)
         if conf >= 0.8:
-            # Update status to ASSIGNED when moving to assignment queue
-            ticket.update_status(TicketStatus.ASSIGNED)
+            # Actually assign the ticket if AI suggested an assignee
+            if suggested_assignee:
+                ticket.assign(suggested_assignee)
+            else:
+                # No assignee suggestion, just update status
+                ticket.update_status(TicketStatus.ASSIGNED)
             self.move_ticket(
                 ticket.id,
                 QueueType.INBOX,
