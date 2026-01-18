@@ -101,6 +101,30 @@ class EventPublisher:
             extra_channels=[f"agent.{assignee}"],
         )
 
+    async def publish_ticket_resolved(
+        self,
+        ticket: Ticket,
+        resolution_message: Optional[str] = None,
+    ) -> None:
+        """Publish ticket.resolved event and trigger n8n webhook for response."""
+        await self._publish_event(
+            event_type="ticket.resolved",
+            data={
+                "ticket_id": ticket.id,
+                "resolution_action": ticket.resolution_action.value,
+                "assignee": ticket.assignee,
+                "status": ticket.status.value,
+            },
+            ticket=ticket,
+        )
+
+        # Send webhook notification to n8n for responding to the user
+        from app.services.webhook_service import webhook_service
+        try:
+            await webhook_service.send_resolution_notification(ticket, resolution_message)
+        except Exception as e:
+            print(f"Failed to send resolution webhook for ticket {ticket.id}: {e}")
+
     async def publish_ticket_triage_pending(self, ticket: Ticket) -> None:
         """Publish ticket.triage_pending event - triggers n8n AI workflow."""
         from app.services.user_service import user_service

@@ -126,6 +126,13 @@ class TicketUpdateRequest(BaseModel):
     assignee: Optional[str] = None
 
 
+class ResolveTicketRequest(BaseModel):
+    """Request body for resolving a ticket."""
+
+    resolution_message: Optional[str] = None
+    resolution_action: Optional[str] = "MANUAL"  # MANUAL, FAQ_LINK, AUTO_RESPONSE, etc.
+
+
 class TicketResponse(BaseModel):
     """Standard ticket response."""
 
@@ -566,6 +573,75 @@ async def list_tickets(
         limit=limit,
         offset=offset,
     )
+
+
+@router.post("/{ticket_id}/resolve")
+async def resolve_ticket(
+    ticket_id: str,
+    request: ResolveTicketRequest,
+    background_tasks: BackgroundTasks,
+):
+    """
+    Mark a ticket as resolved and trigger webhook notification to respond to the user.
+    
+    This endpoint:
+    1. Marks the ticket as RESOLVED
+    2. Moves it to the RESOLUTION queue
+    3. Sends a webhook to n8n with ticket data and source info
+    4. n8n can then route the response back to the original source (Discord, Email, GitHub)
+    """
+    ticket = ticket_repository.get(ticket_id)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    # Import AutoResolveAction enum
+    from app.models import AutoResolveAction
+
+    # Map string action to enum
+    action_map = {
+        "MANUAL": AutoResolveAction.MANUAL,
+        "FAQ_LINK": AutoResolveAction.FAQ_LINK,
+        "AUTO_RESPONSE": AutoResolveAction.AUTO_RESPONSE,
+        "REBOOT": AutoResolveAction.REBOOT,
+        "CONFIG_CHANGE": AutoResolveAction.CONFIG_CHANGE,
+        "NONE": AutoResolveAction.NONE,
+    }
+    
+    action = action_map.get(
+        request.resolution_action.upper() if request.resolution_action else "MANUAL",
+        AutoResolveAction.MANUAL
+    )
+
+    # Mark as resolved
+    old_queue = ticket.current_queue
+    ticket.mark_resolved(action=action)
+    
+    # Move ticket to resolution queue if not already there
+    if ticket.current_queue != QueueType.RESOLUTION:
+        queue_manager.move_ticket(
+            ticket_id=ticket_id,
+            from_queue=old_queue,
+            to_queue=QueueType.RESOLUTION,
+            ticket=ticket,
+            reason="manually resolved"
+        )
+    
+    ticket_repository.save(ticket)
+
+    # Publish resolution event (includes webhook to n8n)
+    background_tasks.add_task(
+        event_publisher.publish_ticket_resolved,
+        ticket,
+        request.resolution_message,
+    )
+
+    return {
+        "ticket_id": ticket_id,
+        "status": ticket.status.value,
+        "queue": ticket.current_queue.value,
+        "resolution_action": action.value,
+        "message": "Ticket resolved. Notification will be sent to user via original channel.",
+    }
 
 
 @router.delete("/{ticket_id}")

@@ -320,33 +320,35 @@
         <div class="flex flex-col py-3 border-b border-border/50">
           <span class="text-sm text-muted-foreground mb-2">Description</span>
           {#if isEditingDescription}
-          <div class="flex items-center gap-2 mb-2">
-            <input
-              type="text"
+          <div class="flex flex-col gap-2 mb-2">
+            <textarea
               bind:value={editedDescription}
-              class="flex-1 text-lg font-semibold bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
+              class="w-full text-sm text-foreground leading-relaxed bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary resize-none min-h-[80px]"
+              rows="4"
               autofocus
-            />
-            <button
-              type="button"
-              onclick={handleSaveDescription}
-              class="p-1.5 rounded hover:bg-muted text-primary"
-              aria-label="Save"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onclick={handleCancelEditDescription}
-              class="p-1.5 rounded hover:bg-muted text-muted-foreground"
-              aria-label="Cancel"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            ></textarea>
+            <div class="flex justify-end gap-2">
+              <button
+                type="button"
+                onclick={handleCancelEditDescription}
+                class="p-1.5 rounded hover:bg-muted text-muted-foreground"
+                aria-label="Cancel"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onclick={handleSaveDescription}
+                class="p-1.5 rounded hover:bg-muted text-primary"
+                aria-label="Save"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+            </div>
           </div>
           {:else}
             <div class="flex items-start justify-between gap-2 mb-2">
