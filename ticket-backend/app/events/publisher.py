@@ -125,7 +125,7 @@ class EventPublisher:
             "priority": ticket.priority.value,
             "source": ticket.source.value,
             "content": {
-                "subject": ticket.content.subject,
+                "subject": ticket.title,
                 "body": ticket.content.extract_body(),
                 "sender": ticket.content.sender,
             }
