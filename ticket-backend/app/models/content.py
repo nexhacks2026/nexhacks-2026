@@ -401,6 +401,7 @@ class SMSContent(TicketContent):
     def __init__(
         self,
         sender_phone_number: str,
+        recipient_phone_number: str,
         message_body: str,
         timestamp: datetime,
         message_sid: Optional[str] = None,
