@@ -140,7 +140,7 @@ export async function addTicket(
       payload: {
         fields: {
           title,
-          description,
+          content: description,
         },
         submission_time: new Date().toISOString(),
       },

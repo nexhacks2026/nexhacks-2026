@@ -291,6 +291,40 @@ async def ingest_ticket(
             # If updating title fails for any reason, continue without blocking ingestion
             pass
 
+    # Extract description from form fields (important for AI processing)
+    description_candidate = None
+    if request.metadata and isinstance(request.metadata, dict):
+        if "description" in request.metadata:
+            description_candidate = request.metadata.get("description")
+
+    if not description_candidate:
+        payload_fields = (
+            request.payload.get("fields") if isinstance(request.payload, dict) else None
+        )
+        if not payload_fields:
+            payload_fields = (
+                request.payload.get("form_fields")
+                if isinstance(request.payload, dict)
+                else None
+            )
+
+        if isinstance(payload_fields, dict):
+            if "description" in payload_fields:
+                description_candidate = payload_fields.get("description")
+            elif "content" in payload_fields:
+                description_candidate = payload_fields.get("content")
+            elif "body" in payload_fields:
+                description_candidate = payload_fields.get("body")
+            elif "message" in payload_fields:
+                description_candidate = payload_fields.get("message")
+
+    if description_candidate:
+        try:
+            ticket.update_description(str(description_candidate))
+        except Exception:
+            # If updating description fails for any reason, continue without blocking ingestion
+            pass
+
     # Save ticket
     ticket_repository.save(ticket)
 
