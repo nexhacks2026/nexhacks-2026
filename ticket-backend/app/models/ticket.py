@@ -292,8 +292,11 @@ class Ticket(BaseTicket):
         self._touch()
 
     def clear_ai_data(self) -> None:
-        """Clear all AI reasoning and response data (used when re-triaging)."""
+        """Clear all AI reasoning, response data, category, and priority (used when re-triaging)."""
         self._ai_reasoning = {}
+        self._category = None
+        self._priority = None
+        self._suggested_assignee = None
         self._touch()
 
     def validate(self) -> bool:
