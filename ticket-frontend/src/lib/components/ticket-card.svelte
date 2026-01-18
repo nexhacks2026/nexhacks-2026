@@ -18,8 +18,13 @@
     low: 'bg-muted text-muted-foreground border-border'
   };
   
-  // Check if assigned to coding_agent
-  let isCodingAgent = $derived(ticket.assignee?.id === 'coding-agent' || ticket.suggestedAssignee === 'coding-agent');
+  // Check if assigned to coding_agent and in assigned status
+  let isCodingAgent = $derived(
+    ticket.assignee?.id === 'coding-agent' && ticket.status === 'assigned'
+  );
+  
+  // Tickets assigned to coding agent cannot be moved (locked)
+  let canDrag = $derived(isDraggable && !isCodingAgent);
   
   function formatTimeAgo(dateString: string): string {
     const date = new Date(dateString);
@@ -37,16 +42,13 @@
 </script>
 
 <button
-  class="w-full text-left p-4 rounded-lg border transition-all duration-200 group relative overflow-hidden {isSelected ? 'bg-primary/5 border-primary ring-1 ring-primary/50' : 'bg-muted border-border hover:border-muted-foreground'} {isDraggable ? 'cursor-pointer' : 'cursor-default'}"
-  draggable={isDraggable}
+  class="w-full text-left p-4 rounded-lg border transition-all duration-200 group relative overflow-hidden {isSelected ? 'bg-primary/5 border-primary ring-1 ring-primary/50' : 'bg-muted border-border hover:border-muted-foreground'} {canDrag ? 'cursor-pointer' : 'cursor-default'}"
+  draggable={canDrag}
   ondragstart={ondragstart}
   onclick={onselect}
 >
-  {#if !isDraggable}
-    <div class="absolute inset-0 triage-gradient pointer-events-none"></div>
-  {/if}
-  {#if isCodingAgent}
-    <div class="absolute inset-0 coding-gradient pointer-events-none"></div>
+  {#if !canDrag}
+    <div class="absolute inset-0 {isCodingAgent ? 'coding-gradient' : 'triage-gradient'} pointer-events-none"></div>
   {/if}
   <div class="flex items-start justify-between gap-2 mb-2 relative z-10">
     <h4 class="font-medium text-foreground text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors relative z-10">
