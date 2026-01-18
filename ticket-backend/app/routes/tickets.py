@@ -485,6 +485,8 @@ async def update_ticket(
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     changes = {}
+    is_being_resolved = False
+    old_status = ticket.status
 
     if request.title is not None:
         ticket.update_title(request.title)
@@ -495,7 +497,33 @@ async def update_ticket(
         changes["description"] = request.description
 
     if request.status is not None:
-        ticket.update_status(request.status)
+        print(f"📝 Status update requested: {old_status.value} -> {request.status.value}")
+        
+        # Check if ticket is being resolved
+        if request.status == TicketStatus.RESOLVED and old_status != TicketStatus.RESOLVED:
+            print(f"🎯 Ticket is being RESOLVED!")
+            is_being_resolved = True
+            
+            # Import AutoResolveAction enum
+            from app.models import AutoResolveAction
+            
+            # Mark as resolved with MANUAL action
+            ticket.mark_resolved(action=AutoResolveAction.MANUAL)
+            
+            # Move to RESOLUTION queue if not already there
+            if ticket.current_queue != QueueType.RESOLUTION:
+                print(f"📦 Moving ticket from {ticket.current_queue.value} to RESOLUTION queue")
+                old_queue = ticket.current_queue
+                queue_manager.move_ticket(
+                    ticket_id=ticket_id,
+                    from_queue=old_queue,
+                    to_queue=QueueType.RESOLUTION,
+                    ticket=ticket,
+                    reason="manually resolved via status update"
+                )
+        else:
+            ticket.update_status(request.status)
+        
         changes["status"] = request.status.value
 
     if request.priority is not None:
@@ -524,8 +552,17 @@ async def update_ticket(
         )
 
     ticket_repository.save(ticket)
+    print(f"💾 Ticket saved to repository")
 
-    if changes:
+    # If ticket is being resolved, trigger the resolution webhook
+    if is_being_resolved:
+        print(f"📡 Triggering resolution webhook for ticket {ticket_id}")
+        background_tasks.add_task(
+            event_publisher.publish_ticket_resolved,
+            ticket,
+            "Ticket resolved manually by agent",
+        )
+    elif changes:
         background_tasks.add_task(
             event_publisher.publish_ticket_updated,
             ticket,
