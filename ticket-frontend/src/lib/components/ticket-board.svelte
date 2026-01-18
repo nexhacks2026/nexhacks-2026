@@ -75,11 +75,11 @@
 </script>
 
 <div class="h-full p-6 overflow-x-auto">
-  <div class="flex gap-4 h-full min-w-max">
+  <div class="flex gap-4 h-full">
     {#each columns as column}
       {@const columnTickets = getTicketsByStatus(column.id)}
       <div 
-        class="w-80 flex flex-col bg-card rounded-xl border border-border transition-all duration-200 {dragOverColumn === column.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}"
+        class="flex-1 flex flex-col bg-card rounded-xl border border-border transition-all duration-200 {dragOverColumn === column.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}"
         ondragover={(e) => handleDragOver(e, column.id)}
         ondragleave={handleDragLeave}
         ondrop={() => handleDrop(column.id)}
