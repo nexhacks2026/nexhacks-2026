@@ -1,6 +1,7 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
-  import { updateTicketStatus, updateTicketTitle, updateTicketDescription, deleteTicket, type Ticket, type TicketStatus, type TicketPriority } from '$lib/stores/tickets';
+  import { updateTicketStatus, updateTicketTitle, updateTicketDescription, deleteTicket, assignTicketToAgent, releaseTicketFromAgent, type Ticket, type TicketStatus, type TicketPriority } from '$lib/stores/tickets';
+  import { users, currentUser } from '$lib/stores/users.ts';
   import AiReasoningPanel from './ai-reasoning-panel.svelte';
   
   interface Props {
@@ -26,13 +27,29 @@
     label: string;
   }
   
-  const statuses: StatusOption[] = [
+  const allStatuses: StatusOption[] = [
     { id: 'inbox', label: 'Inbox' },
     { id: 'triage_pending', label: 'Triage' },
     { id: 'assigned', label: 'Assigned' },
     { id: 'in_progress', label: 'In Progress' },
     { id: 'resolved', label: 'Resolved' }
   ];
+  
+  // Filter statuses based on user role
+  let availableStatuses = $derived(
+    $currentUser?.id === 'user-0'
+      ? allStatuses.filter(s => s.id !== 'triage_pending') // Admin can't set triage
+      : allStatuses.filter(s => s.id !== 'inbox' && s.id !== 'triage_pending') // Non-admin can't set inbox or triage
+  );
+  
+  // Check if status changes should be disabled (for triage tickets)
+  let isStatusLocked = $derived(ticket.status === 'triage_pending');
+  
+  // Only admin can delete tickets
+  let canDelete = $derived($currentUser?.id === 'user-0');
+  
+  // When ticket is in triage, admin can only delete (all other actions disabled)
+  let canEdit = $derived(!isStatusLocked);
   
   const priorityStyles: Record<TicketPriority, string> = {
     critical: 'bg-destructive text-white',
@@ -43,6 +60,23 @@
   
   function handleStatusChange(newStatus: TicketStatus): void {
     updateTicketStatus(ticket.id, newStatus);
+  }
+  
+  async function handleAssigneeChange(userName: string): Promise<void> {
+    try {
+      if (userName) {
+        // If reassigning, just assign directly (backend handles reassignment)
+        await assignTicketToAgent(ticket.id, userName);
+      } else {
+        // If unassigning, release the ticket
+        if (ticket.assignee) {
+          await releaseTicketFromAgent(ticket.id, ticket.assignee.name);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update assignee:', error);
+      alert('Failed to update assignee');
+    }
   }
   
   function formatDate(dateString: string): string {
@@ -194,16 +228,18 @@
             <h2 class="text-lg font-semibold text-foreground">{ticket.title}</h2>
             
             <!-- Edit Title Button -->
-            <button
-              type="button"
-              onclick={handleEditTitle}
-              class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Edit title"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-              </svg>
-            </button>
+            {#if canEdit}
+              <button
+                type="button"
+                onclick={handleEditTitle}
+                class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Edit title"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+            {/if}
           </div>
         {/if}
       </div>
@@ -212,21 +248,34 @@
       <div class="space-y-4">
        
         <!-- Status Section -->
-        <div class="flex items-center justify-between py-3 border-b border-border/50">
-          <span class="text-sm text-muted-foreground">Status</span>
-          <div class="flex gap-1">
-            {#each statuses as status}
-              <button
-                type="button"
-                onclick={() => handleStatusChange(status.id)}
-                class="text-xs px-2.5 py-1 rounded-md transition-all duration-200 {ticket.status === status.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-secondary'}"
-                aria-label="Change status to {status.label}"
-              >
-                {status.label}
-              </button>
-            {/each}
+        {#if canEdit}
+          <div class="flex items-center justify-between py-3 border-b border-border/50">
+            <span class="text-sm text-muted-foreground">Status</span>
+            <div class="flex gap-1">
+              {#each availableStatuses as status}
+                <button
+                  type="button"
+                  onclick={() => handleStatusChange(status.id)}
+                  class="text-xs px-2.5 py-1 rounded-md transition-all duration-200 {ticket.status === status.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-secondary'}"
+                  aria-label="Change status to {status.label}"
+                >
+                  {status.label}
+                </button>
+              {/each}
+            </div>
           </div>
-        </div>
+        {:else}
+          <!-- Show locked status for triage tickets -->
+          <div class="flex items-center justify-between py-3 border-b border-border/50">
+            <span class="text-sm text-muted-foreground">Status</span>
+            <div class="text-xs px-2.5 py-1 rounded-md bg-yellow-500/20 text-yellow-500 flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Triage (Locked)
+            </div>
+          </div>
+        {/if}
         
         <!-- Description + Edit Desc Section -->
         <div class="flex flex-col py-3 border-b border-border/50">
@@ -269,38 +318,40 @@
               {/if}
               
               <!-- Edit Description Button -->
-              <button
-                type="button"
-                onclick={handleEditDescription}
-                class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Edit description"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-              </button>
+              {#if canEdit}
+                <button
+                  type="button"
+                  onclick={handleEditDescription}
+                  class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Edit description"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              {/if}
             </div>
           {/if}
           
         </div>
 
         <!-- Assignee Section -->
-        <div class="flex items-center justify-between py-3 border-b border-border/50">
-          <span class="text-sm text-muted-foreground">Assignee</span>
-          {#if ticket.assignee}
-            <div class="flex items-center gap-2">
-              <div 
-                class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white"
-                style="background-color: {ticket.assignee.color}"
-              >
-                {ticket.assignee.avatar}
-              </div>
-              <span class="text-sm text-foreground">{ticket.assignee.name}</span>
-            </div>
-          {:else}
-            <span class="text-sm text-muted-foreground italic">Unassigned</span>
-          {/if}
-        </div>
+        {#if canEdit}
+          <div class="py-3 border-b border-border/50">
+            <span class="text-sm text-muted-foreground block mb-2">Assigned To</span>
+            <select
+              value={ticket.assignee?.name || ''}
+              onchange={(e) => handleAssigneeChange(e.currentTarget.value)}
+              disabled={$currentUser?.id !== 'user-0'}
+              class="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="">Unassigned</option>
+              {#each users.filter(u => u.id !== 'user-0') as user}
+                <option value={user.name}>{user.name}</option>
+              {/each}
+            </select>
+          </div>
+        {/if}
         
         <!-- Created Section -->
         <div class="flex items-center justify-between py-3 border-b border-border/50">
@@ -328,23 +379,25 @@
         {/if}
         
         <!-- Delete Button -->
-        <div class="py-4 border-t border-border/50">
-          <button
-            type="button"
-            onclick={handleDelete}
-            disabled={isDeleting}
-            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            {#if isDeleting}
-              Deleting...
-            {:else}
-              Delete Ticket
-            {/if}
-          </button>
-        </div>
+        {#if canDelete}
+          <div class="py-4 border-t border-border/50">
+            <button
+              type="button"
+              onclick={handleDelete}
+              disabled={isDeleting}
+              class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              {#if isDeleting}
+                Deleting...
+              {:else}
+                Delete Ticket
+              {/if}
+            </button>
+          </div>
+        {/if}
       </div>
       
       <!-- Ai Reasoning Part -->

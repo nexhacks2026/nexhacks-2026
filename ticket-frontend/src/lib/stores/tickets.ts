@@ -9,6 +9,7 @@ import {
   type BackendTicket
 } from "../api/client"
 import { websocket, type TicketEvent } from "../api/websocket"
+import { currentUser } from "./users"
 
 export interface Assignee {
   name: string
@@ -30,10 +31,10 @@ export interface AIReasoning {
 }
 
 // Backend status types matching the backend enums
-export type BackendTicketStatus = "INBOX" | "TRIAGE_PENDING" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED"
+export type BackendTicketStatus = "INBOX" | "TRIAGE_PENDING" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED" | "CLOSED"
 
 // Frontend status maps to backend status
-export type TicketStatus = "inbox" | "triage_pending" | "assigned" | "in_progress" | "resolved"
+export type TicketStatus = "inbox" | "triage_pending" | "assigned" | "in_progress" | "resolved" | "closed"
 export type TicketPriority = "low" | "medium" | "high" | "critical"
 
 export interface Ticket {
@@ -77,6 +78,8 @@ export function getStatusLabel(status: TicketStatus): string {
       return 'In Progress'
     case 'resolved':
       return 'Resolved'
+    case 'closed':
+      return 'Closed'
     default:
       return status
   }
@@ -95,6 +98,8 @@ export function getStatusColor(status: TicketStatus): string {
       return 'bg-purple-500/10 text-purple-500'
     case 'resolved':
       return 'bg-green-500/10 text-green-500'
+    case 'closed':
+      return 'bg-gray-500/10 text-gray-500'
     default:
       return 'bg-muted text-muted-foreground'
   }
@@ -119,14 +124,14 @@ export async function addTicket(
       priority: priority.toUpperCase(),
       tags: tags || [],
     };
-    
+
     // Add category if provided
     if (category) {
       metadata.category = category.toUpperCase();
     }
-    
+
     const requestPayload = {
-      source: 'FORM',
+      source: 'FORM' as const,
       content_type: 'form',
       payload: {
         fields: {
@@ -137,18 +142,18 @@ export async function addTicket(
       },
       metadata,
     };
-    
+
     console.log('Sending ticket creation request:', requestPayload);
-    
+
     const response = await apiCreateTicket(requestPayload);
-    
+
     console.log('Ticket creation response:', response);
-    
+
     // Refresh tickets after creation
     console.log('Reloading tickets...');
     await loadTickets();
     console.log('Tickets reloaded successfully');
-    
+
     return response.ticket_id;
   } catch (error) {
     console.error('Failed to create ticket:', error);
@@ -212,7 +217,7 @@ function transformBackendTicket(backendTicket: BackendTicket): Ticket {
 
   // Build AI reasoning from backend data
   const aiReasoning: AIReasoning = {
-    summary: backendTicket.ai_reasoning?.summary || `Ticket from ${backendTicket.source}`,
+    summary: backendTicket.ai_reasoning?.summary || (backendTicket.ai_reasoning?.reasoning as string) || `Ticket from ${backendTicket.source}`,
     confidence: backendTicket.ai_reasoning?.confidence || 0.5,
     steps: [],
   }
@@ -270,13 +275,28 @@ const errorWritable: Writable<string | null> = writable<string | null>(null)
 const currentAgentWritable: Writable<string | null> = writable<string | null>(null)
 
 // Exported stores
-export const tickets: Readable<Ticket[]> = { subscribe: ticketsWritable.subscribe }
+export const allTickets: Readable<Ticket[]> = { subscribe: ticketsWritable.subscribe }
 export const loading: Readable<boolean> = { subscribe: loadingWritable.subscribe }
 export const error: Readable<string | null> = { subscribe: errorWritable.subscribe }
 export const currentAgent: Writable<string | null> = currentAgentWritable
 
+// Filtered tickets based on current user
+// Admin (user-0) sees all tickets, other users only see their assigned tickets
+export const tickets: Readable<Ticket[]> = derived(
+  [ticketsWritable, currentUser],
+  ([$tickets, $currentUser]) => {
+    // Admin sees all tickets
+    if ($currentUser?.id === 'user-0') {
+      return $tickets
+    }
+    
+    // Regular users only see tickets assigned to them
+    return $tickets.filter(t => t.assignee?.name === $currentUser?.name)
+  }
+)
+
 // Derived stores
-export const ticketsByStatus: Readable<Record<TicketStatus, Ticket[]>> = derived(ticketsWritable, ($tickets: Ticket[]) => {
+export const ticketsByStatus: Readable<Record<TicketStatus, Ticket[]>> = derived(tickets, ($tickets: Ticket[]) => {
   return {
     inbox: $tickets.filter((t: Ticket) => t.status === 'inbox'),
     triage_pending: $tickets.filter((t: Ticket) => t.status === 'triage_pending'),
@@ -377,25 +397,9 @@ export async function updateTicketPriority(ticketId: string, newPriority: Ticket
 export async function assignTicketToAgent(ticketId: string, agentId: string): Promise<void> {
   try {
     await assignTicket(ticketId, agentId)
-
-    // Update local state
-    ticketsWritable.update((items: Ticket[]) =>
-      items.map((t: Ticket) => {
-        if (t.id === ticketId) {
-          return {
-            ...t,
-            assignee: {
-              name: agentId,
-              avatar: agentId.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2),
-              color: stringToColor(agentId),
-            },
-            status: 'in_progress' as TicketStatus,
-            updatedAt: new Date().toISOString(),
-          }
-        }
-        return t
-      })
-    )
+    
+    // Reload tickets to get the backend's status update
+    await loadTickets()
   } catch (e) {
     console.error('Failed to assign ticket:', e)
   }
@@ -404,14 +408,9 @@ export async function assignTicketToAgent(ticketId: string, agentId: string): Pr
 export async function releaseTicketFromAgent(ticketId: string, agentId: string): Promise<void> {
   try {
     await releaseTicket(ticketId, agentId)
-
-    ticketsWritable.update((items: Ticket[]) =>
-      items.map((t: Ticket) =>
-        t.id === ticketId
-          ? { ...t, assignee: null, status: 'inbox' as TicketStatus, updatedAt: new Date().toISOString() }
-          : t
-      )
-    )
+    
+    // Reload tickets to get the backend's status update
+    await loadTickets()
   } catch (e) {
     console.error('Failed to release ticket:', e)
   }

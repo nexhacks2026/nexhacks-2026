@@ -102,7 +102,77 @@ class QueueManager:
                 )
             )
 
+            # Trigger AI Triage if enqueued to INBOX
+            if queue == QueueType.INBOX:
+                
+                try:
+                    import asyncio
+                    from app.services.ai_client import ai_client
+                    
+                    async def run_triage_task():
+                        # Simple background task wrapper
+                        result = await ai_client.analyze_triage(ticket)
+                        if result:
+                            self._apply_triage_result(ticket, result)
+
+                    # Get or create event loop to run background task
+                    try:
+                        loop = asyncio.get_running_loop()
+                    except RuntimeError:
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                    
+                    loop.create_task(run_triage_task())
+                except Exception as e:
+                    print(f"Failed to trigger AI triage: {e}")
+
             return len(self._queues[queue])
+
+    def _apply_triage_result(self, ticket: Ticket, result: dict) -> None:
+        """
+        Apply AI triage results to ticket and move to appropriate queue.
+        This runs in the background, so we must be careful with state.
+        """
+        # Update ticket fields
+        ticket.log_reasoning(result)
+        
+        # Update Priority
+        if result.get("priority"):
+            from app.models import TicketPriority
+            try:
+                ticket.update_priority(TicketPriority(result["priority"]))
+            except ValueError:
+                pass
+        
+        # Update Category
+        if result.get("category"):
+            from app.models import TicketCategory
+            try:
+                ticket.set_category(TicketCategory(result["category"]))
+            except ValueError:
+                pass
+                
+        # Determine queue move based on confidence
+        conf = result.get("confidence", 0)
+        
+        # >= 0.8: High confidence -> Auto-assign (move to ASSIGNMENT)
+        if conf >= 0.8:
+            self.move_ticket(
+                ticket.id, 
+                QueueType.INBOX, 
+                QueueType.ASSIGNMENT, 
+                ticket, 
+                reason=f"AI Auto-Triage (Confidence: {conf})"
+            )
+        else:
+            # < 0.8: Low confidence -> Manual Triage (move to TRIAGE)
+            self.move_ticket(
+                ticket.id, 
+                QueueType.INBOX, 
+                QueueType.TRIAGE, 
+                ticket, 
+                reason=f"AI Triage Needed (Confidence: {conf})"
+            )
 
     def dequeue(self, queue: QueueType, priority_based: bool = True) -> Optional[str]:
         """

@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { addTicket } from '../stores/tickets.ts';
+  import { addTicket, assignTicketToAgent } from '../stores/tickets.ts';
+  import { users, currentUser } from '../stores/users.ts';
+  import { toast } from '../stores/toast.ts';
   
   let { show = $bindable(false) } = $props();
   
@@ -7,6 +9,7 @@
     title: '',
     description: '',
     priority: 'medium' as 'low' | 'medium' | 'high' | 'critical',
+    assignee: '' as string,
     tags: ''
   });
   
@@ -17,6 +20,7 @@
       title: '',
       description: '',
       priority: 'medium',
+      assignee: '',
       tags: ''
     };
   }
@@ -42,6 +46,14 @@
         undefined,
         tags.length > 0 ? tags : undefined
       );
+      
+      // Assign user if selected
+      if (ticketForm.assignee) {
+        await assignTicketToAgent(ticketId, ticketForm.assignee);
+      }
+      
+      // Show success toast
+      toast.success('Ticket created successfully!');
       
       closeModal();
     } catch (error) {
@@ -103,6 +115,22 @@
             <option value="medium">Medium</option>
             <option value="high">High</option>
             <option value="critical">Critical</option>
+          </select>
+        </div>
+        
+        <!-- Assignee -->
+        <div>
+          <label for="ticket-assignee" class="block text-sm font-medium text-foreground mb-1">Assign To</label>
+          <select
+            id="ticket-assignee"
+            bind:value={ticketForm.assignee}
+            disabled={$currentUser?.id !== 'user-0'}
+            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <option value="">Unassigned (optional)</option>
+            {#each users.filter(u => u.id !== 'user-0') as user}
+              <option value={user.name}>{user.name}</option>
+            {/each}
           </select>
         </div>
         

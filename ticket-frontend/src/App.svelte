@@ -3,6 +3,7 @@
   import TicketBoard from '$lib/components/ticket-board.svelte';
   import TicketDetail from '$lib/components/ticket-detail.svelte';
   import Header from '$lib/components/header.svelte';
+  import ToastContainer from '$lib/components/toast-container.svelte';
   import { 
     tickets, 
     loading, 
@@ -71,7 +72,10 @@
 <div class="min-h-screen bg-background">
   <Header />
   
+
   <!-- Connection status indicators -->
+   <!-- Toast notifications -->
+  <ToastContainer />
   <div class="fixed bottom-4 right-4">
 
     <!-- Database Live Indicator -->
