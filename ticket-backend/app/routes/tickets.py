@@ -476,6 +476,11 @@ async def list_tickets(
 
     total = ticket_repository.count()
 
+    logger.info(f"Listing tickets with filters: status={status}, queue={queue}, priority={priority}, category={category}")
+    logger.info(f"Found {len(tickets)} tickets. Total in repository: {total}")
+    for t in tickets:
+        logger.info(f"Ticket: {t.id} - {t.title} - Status: {t.status} - Queue: {t.current_queue}")
+
     return TicketListResponse(
         tickets=[t.to_dict() for t in tickets],
         total=total,

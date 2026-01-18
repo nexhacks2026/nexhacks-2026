@@ -293,7 +293,7 @@ export const tickets: Readable<Ticket[]> = derived(
     if ($currentUser?.id === 'user-0') {
       return $tickets
     }
-    
+
     // Regular users only see tickets assigned to them
     return $tickets.filter(t => t.assignee?.name === $currentUser?.name)
   }
@@ -320,7 +320,11 @@ export async function loadTickets(): Promise<void> {
 
   try {
     const backendTickets = await fetchTickets({ limit: 100 })
+    console.log('[DEBUG] Fetched backend tickets:', backendTickets)
+
     const frontendTickets = backendTickets.map(transformBackendTicket)
+    console.log('[DEBUG] Transformed frontend tickets:', frontendTickets)
+
     ticketsWritable.set(frontendTickets)
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Failed to load tickets'
@@ -403,7 +407,7 @@ export async function updateTicketPriority(ticketId: string, newPriority: Ticket
 export async function assignTicketToAgent(ticketId: string, agentId: string): Promise<void> {
   try {
     await assignTicket(ticketId, agentId)
-    
+
     // Reload tickets to get the backend's status update
     await loadTickets()
   } catch (e) {
@@ -414,7 +418,7 @@ export async function assignTicketToAgent(ticketId: string, agentId: string): Pr
 export async function releaseTicketFromAgent(ticketId: string, agentId: string): Promise<void> {
   try {
     await releaseTicket(ticketId, agentId)
-    
+
     // Reload tickets to get the backend's status update
     await loadTickets()
   } catch (e) {
