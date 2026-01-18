@@ -321,6 +321,10 @@ async def ingest_ticket(
                 if isinstance(request.payload, dict)
                 else None
             )
+        
+        # Fallback to payload for flat structures
+        if not payload_fields and isinstance(request.payload, dict):
+            payload_fields = request.payload
 
         if isinstance(payload_fields, dict):
             if "subject" in payload_fields:
@@ -353,6 +357,10 @@ async def ingest_ticket(
                 if isinstance(request.payload, dict)
                 else None
             )
+        
+        # Fallback to payload for flat structures
+        if not payload_fields and isinstance(request.payload, dict):
+            payload_fields = request.payload
 
         if isinstance(payload_fields, dict):
             if "description" in payload_fields:
