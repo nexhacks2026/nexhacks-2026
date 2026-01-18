@@ -3,6 +3,7 @@
   import { updateTicketStatus, updateTicketTitle, updateTicketDescription, deleteTicket, assignTicketToAgent, releaseTicketFromAgent, type Ticket, type TicketStatus, type TicketPriority } from '$lib/stores/tickets';
   import { users, currentUser } from '$lib/stores/users.ts';
   import AiReasoningPanel from './ai-reasoning-panel.svelte';
+  import UnassignModal from './unassign-modal.svelte';
   
   interface Props {
     ticket: Ticket;
@@ -16,6 +17,9 @@
   
   let isEditingDescription = $state(false);
   let editedDescription = $state('');
+  
+  let showUnassignModal = $state(false);
+  let pendingUnassignUser = $state<string | null>(null);
 
   $effect(() => {
     editedTitle = ticket.title;
@@ -68,15 +72,44 @@
         // If reassigning, just assign directly (backend handles reassignment)
         await assignTicketToAgent(ticket.id, userId);
       } else {
-        // If unassigning, release the ticket
-        if (ticket.assignee) {
-          await releaseTicketFromAgent(ticket.id, ticket.assignee.id);
+        // If unassigning, show modal to get reason (admin only)
+        if (ticket.assignee && $currentUser?.id === 'user-0') {
+          pendingUnassignUser = ticket.assignee.id;
+          showUnassignModal = true;
         }
       }
     } catch (error) {
       console.error('Failed to update assignee:', error);
       alert('Failed to update assignee');
     }
+  }
+  
+  async function handleUnassignConfirm(reason: string): Promise<void> {
+    showUnassignModal = false;
+    
+    if (!pendingUnassignUser) return;
+    
+    try {
+      // Append the unassignment reason to the description
+      if (reason) {
+        const timestamp = new Date().toLocaleString();
+        const appendText = `\n\n---\n**Unassignment Note** (${timestamp}):\nPreviously assigned to ${ticket.assignee?.name}. Reason: ${reason}`;
+        await updateTicketDescription(ticket.id, ticket.description + appendText);
+      }
+      
+      // Release the ticket
+      await releaseTicketFromAgent(ticket.id, pendingUnassignUser);
+      
+      pendingUnassignUser = null;
+    } catch (error) {
+      console.error('Failed to unassign:', error);
+      alert('Failed to unassign ticket');
+    }
+  }
+  
+  function handleUnassignCancel(): void {
+    showUnassignModal = false;
+    pendingUnassignUser = null;
   }
   
   function formatDate(dateString: string): string {
@@ -419,3 +452,11 @@
     </div>
   </div>
 </aside>
+
+<UnassignModal 
+  show={showUnassignModal} 
+  ticketId={ticket.id} 
+  currentAssignee={ticket.assignee?.name || ''} 
+  onconfirm={handleUnassignConfirm}
+  oncancel={handleUnassignCancel}
+/>
